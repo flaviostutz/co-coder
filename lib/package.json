@@ -1,7 +1,7 @@
 {
-  "name": "llm-code-prompter",
+  "name": "co-coder",
   "version": "0.0.1",
-  "description": "Tools to help prompting code contexts to LLM engines",
+  "description": "Tools to help prompting code tasks to LLM engines",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [

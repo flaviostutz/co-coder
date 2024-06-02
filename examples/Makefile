@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 build: install prereqs
 	pnpm exec tsc --outDir dist
-	@set -x; pnpm exec cdk -o dist synth
+	@set -x; STAGE=$${STAGE} pnpm exec cdk -o dist synth
 
 build-dev:
 	STAGE=dev make build
@@ -27,7 +27,7 @@ all: build lint test
 install:
 	corepack enable
 	@# update local tar gz checksum
-	pnpm update llm-code-prompter
+	pnpm update co-coder
 	pnpm install --frozen-lockfile --config.dedupe-peer-dependents=false
 
 deploy: prereqs
@@ -37,4 +37,7 @@ undeploy: prereqs
 	@set -x; pnpm exec cdk -o dist destroy -f --require-approval never
 
 prereqs:
-
+	@if [ "$${STAGE}" == "" ]; then \
+		echo "ENV STAGE is required"; \
+		exit 1; \
+	fi
