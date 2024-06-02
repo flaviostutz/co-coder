@@ -1,6 +1,6 @@
 # co-coder
 
-Typescript lib for helping with code automation along with LLM engines.
+Tools to help prompting code tasks to LLM engines
 
 See [examples/](/examples/) folder for a showcase
 
