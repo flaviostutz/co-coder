@@ -1,0 +1,43 @@
+{
+  "name": "llm-code-prompter",
+  "version": "0.0.1",
+  "description": "Tools to help prompting code contexts to LLM engines",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**",
+    "package.json",
+    "README.md"
+  ],
+  "packageManager": "pnpm@8.9.0",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flaviostutz/llm-code-prompter.git"
+  },
+  "author": "flaviostutz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/flaviostutz/llm-code-prompter/issues"
+  },
+  "homepage": "https://github.com/flaviostutz/llm-code-prompter#readme",
+  "devDependencies": {
+    "@babel/preset-typescript": "^7.21.0",
+    "@stutzlab/eslint-config": "^3.0.4",
+    "@tsconfig/node16": "16.1.1",
+    "@types/jest": "^29.4.0",
+    "@types/node": "18.11.18",
+    "esbuild-jest": "^0.5.0",
+    "eslint": "^8.56.0",
+    "jest": "^29.4.2",
+    "nock": "^13.5.0",
+    "typescript": "5.3.3"
+  },
+  "dependencies": {
+    "esbuild": "^0.19.11"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
+}
