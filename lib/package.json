@@ -34,7 +34,8 @@
     "typescript": "5.3.3"
   },
   "dependencies": {
-    "esbuild": "^0.19.11"
+    "esbuild": "^0.19.11",
+    "openapi3-ts": "^4.3.2"
   },
   "publishConfig": {
     "access": "public",
