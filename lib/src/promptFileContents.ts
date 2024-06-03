@@ -6,27 +6,32 @@ import * as path from 'path';
  * in a output text in a way that LLM engines can
  * understand the structure of a workspace.
  * @param baseDir root dir
- * @param filesRegex regex to filter files. if not provided, all files will be considered
+ * @param filesRegexArray array of regex to filter files. if not provided, all files will be considered
  */
-export const describeWorkspace = (baseDir: string, filesRegex: string): string => {
+export const promptFileContents = (baseDir: string, filesRegexes: string[] = []): string => {
   if (!fs.existsSync(baseDir)) {
     throw new Error(`Directory ${baseDir} does not exist`);
   }
 
-  let output =
-    'Below there is a sequence of files and its contents. They are part of a workspace with source codes\n\n';
+  let output = '';
 
   const traverseDirectory = (dirPath: string): void => {
     const items = fs.readdirSync(dirPath);
 
     items.forEach((item) => {
       const fullPath = path.join(dirPath, item);
+      const stat = fs.statSync(fullPath);
 
-      if (fs.statSync(fullPath).isDirectory()) {
+      if (stat.isDirectory()) {
         traverseDirectory(fullPath);
-      } else if (new RegExp(filesRegex).test(item)) {
-        const fileContent = fs.readFileSync(fullPath, 'utf-8');
-        output += `File ${fullPath}:\n${fileContent}\n\n`;
+      } else if (stat.isFile()) {
+        if (
+          filesRegexes.length === 0 ||
+          filesRegexes.some((regex) => new RegExp(regex).test(fullPath))
+        ) {
+          const contents = fs.readFileSync(fullPath, 'utf8');
+          output += `File: ${fullPath}: \`\`\`${contents}\`\`\`\n\n`;
+        }
       }
     });
   };
