@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -8,7 +9,11 @@ import * as path from 'path';
  * @param baseDir root dir
  * @param filesRegexArray array of regex to filter files. if not provided, all files will be considered
  */
-export const promptFileContents = (baseDir: string, filesRegexes: string[] = []): string => {
+export const promptFileContents = (
+  baseDir: string,
+  filesRegexes: string[] = [],
+  maxFileSize?: number,
+): string => {
   if (!fs.existsSync(baseDir)) {
     throw new Error(`Directory ${baseDir} does not exist`);
   }
@@ -25,10 +30,10 @@ export const promptFileContents = (baseDir: string, filesRegexes: string[] = [])
       if (stat.isDirectory()) {
         traverseDirectory(fullPath);
       } else if (stat.isFile()) {
-        if (
-          filesRegexes.length === 0 ||
-          filesRegexes.some((regex) => new RegExp(regex).test(fullPath))
-        ) {
+        const fileRegexMatch = filesRegexes.some((regex) => new RegExp(regex).test(fullPath));
+        const fileSizeOk = !maxFileSize || stat.size <= maxFileSize;
+        if (!fileSizeOk) console.log(`Skipping file ${fullPath}: too large`);
+        if (fileRegexMatch && fileSizeOk) {
           const contents = fs.readFileSync(fullPath, 'utf8');
           output += `File: ${fullPath}: \`\`\`${contents}\`\`\`\n\n`;
         }

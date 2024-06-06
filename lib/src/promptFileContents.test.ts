@@ -28,4 +28,22 @@ describe('describeWorkspace', () => {
     fs.unlinkSync(nonMatchingFile);
     fs.rmdirSync(tempDir);
   });
+
+  it('should skip files larger than maxFileSize', () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'test-'));
+    const largeFile = path.join(tempDir, 'largeFile.txt');
+    const smallFile = path.join(tempDir, 'smallFile.txt');
+
+    fs.writeFileSync(largeFile, 'a'.repeat(4000));
+    fs.writeFileSync(smallFile, 'This is a small file');
+
+    const output = promptFileContents(tempDir, ['\\.txt$'], 3000);
+
+    expect(output).toMatch(`File: ${smallFile}: \`\`\`This is a small file\`\`\`\n\n`);
+    expect(output).not.toMatch(`File: ${largeFile}`);
+
+    fs.unlinkSync(largeFile);
+    fs.unlinkSync(smallFile);
+    fs.rmdirSync(tempDir);
+  });
 });
