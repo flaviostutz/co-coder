@@ -12,7 +12,7 @@
 
 1. Analyse the request, but don't generate any codes yet
 
-2. Which additional files would you want to see its contents to help you improving the solution? Answer with the list of files ordered by relevance (most relevant first). Only request files that you didn't receive yet and limit this list to the 20 most important files.
+2. Which additional files would you want to see its contents to help you improving the solution but you didn't have access yet? Answer with the list of files ordered by relevance (most relevant first). Include only files with relevance score >= 4. Limit this list to the 20 most important files.
 
 3. After you receive the required files, proceed with code generation starting the output with "outcome: code-generated"
 
@@ -453,6 +453,8 @@ File sample.wsdl:
 
 * If source code was generated, start the output with "outcome: code-generated" and generate file output contents using the following template: "File: {file name with relative path}: ```{file contents}```" 
 
-* If asking for more files, start the output with "outcome: files-requested" followed by the list of requested files using the format "File: {file name}"
+* If asking for more files, start the output with "outcome: files-requested" followed by the list of requested files using the format "File: {file name} ({relevance score})"
+
+* If you have more source codes that could be generated, indicate that with the text "note: more-codes-to-be-generated"
 
 * Don't explain the reasoning, only generate code or questions

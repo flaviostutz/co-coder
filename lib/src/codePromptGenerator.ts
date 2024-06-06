@@ -1,7 +1,7 @@
 import { promptFileContents } from './promptFileContents';
 
 export type CodePromptGeneratorArgs = {
-  task: string;
+  taskDescription: string;
   projectInformation: string;
   workspaceFiles: {
     baseDir: string;
@@ -21,7 +21,7 @@ export const codePromptGenerator = (args: CodePromptGeneratorArgs): string => {
 
   ### Task
 
-${args.task}
+${args.taskDescription}
   
   ### Approach
   
@@ -89,6 +89,7 @@ ${workspaceFiles}
 
 * If source code was generated, start the output with "outcome: code-generated" and generate file output contents using the following template: "File: {file name with relative path}: \`\`\`{file contents}\`\`\`" 
 * If asking for more files, start the output with "outcome: files-requested" followed by the list of requested files using the format "File: {file name}"
+* If you have more source codes that could be generated, indicate that with the text "note: more-codes-to-be-generated"
 * Don't explain the reasoning, only generate code or questions
 
 `;

@@ -11,7 +11,7 @@ describe('codePromptGenerator', () => {
     files.forEach((file) => fs.writeFileSync(path.join(tempDir, file), `This is ${file}`));
 
     const args: CodePromptGeneratorArgs = {
-      task: 'Test instructions',
+      taskDescription: 'Test instructions',
       projectInformation: 'Test project information',
       workspaceFiles: {
         baseDir: tempDir,
