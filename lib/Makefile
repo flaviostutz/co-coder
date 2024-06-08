@@ -13,8 +13,13 @@ build: install
 	@# Create pack to be used by examples app to simulate real usage of the lib
 	pnpm pack --pack-destination dist
 
-run:
-	pnpm exec ts-node src/main.ts run
+run-example-openai:
+	pnpm exec ts-node src/main.ts run \
+		--task "Discover any bug in this code, summarize them in 50 words and write it to summary.md" \
+		--files ^src/workspacePromptRunner\.ts$ \
+		--preview ^src/.*\.ts$ \
+		--model gpt-3.5-turbo \
+		--api-key "$$(security find-generic-password -w -a flaviostutz -s flaviostutz-openai-apikey)"
 
 lint:
 	pnpm exec eslint ./src --ext .ts
