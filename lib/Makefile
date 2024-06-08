@@ -35,6 +35,7 @@ clean:
 all: build lint test
 
 install:
+	# nvm install
 	corepack enable
 	pnpm install --frozen-lockfile --config.dedupe-peer-dependents=false
 
@@ -51,3 +52,4 @@ publish:
 	echo "" >> .npmrc
 	echo "//registry.npmjs.org/:_authToken=$${NPM_ACCESS_TOKEN}" >> .npmrc
 	pnpm publish --no-git-checks
+

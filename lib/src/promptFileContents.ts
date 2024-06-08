@@ -4,10 +4,11 @@ import * as path from 'path';
 
 /**
  * Given a base dir, describe the files and its contents
- * in a output text in a way that LLM engines can
+ * in a output text in a way that the LLM engine can
  * understand the structure of a workspace.
  * @param baseDir root dir
  * @param filesRegexArray array of regex to filter files. if not provided, all files will be considered
+ * @param maxFileSize maximum individual file size to be included in the prompt. Larger files will be truncated. Defaults to 1000
  */
 export const promptFileContents = (
   baseDir: string,
@@ -31,10 +32,12 @@ export const promptFileContents = (
         traverseDirectory(fullPath);
       } else if (stat.isFile()) {
         const fileRegexMatch = filesRegexes.some((regex) => new RegExp(regex).test(fullPath));
-        const fileSizeOk = !maxFileSize || stat.size <= maxFileSize;
-        if (!fileSizeOk) console.log(`Skipping file ${fullPath}: too large`);
-        if (fileRegexMatch && fileSizeOk) {
-          const contents = fs.readFileSync(fullPath, 'utf8');
+        if (fileRegexMatch) {
+          let contents = fs.readFileSync(fullPath, 'utf8');
+          if (maxFileSize && contents.length > maxFileSize) {
+            console.log(`Truncating file ${fullPath}: too large`);
+            contents = contents.substring(0, maxFileSize);
+          }
           output += `File: ${fullPath}: \`\`\`${contents}\`\`\`\n\n`;
         }
       }
