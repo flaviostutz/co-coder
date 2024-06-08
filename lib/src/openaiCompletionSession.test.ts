@@ -20,8 +20,10 @@ describe('createOpenAICompletionSession', () => {
       },
     } as any;
     completionOptions = {
-      model: 'gpt-3.5-turbo',
-      temperature: 0.7,
+      openaiConfig: {
+        model: 'gpt-3.5-turbo',
+        temperature: 0.7,
+      },
     };
     session = createOpenAICompletionSession(openaiClient, completionOptions);
   });
@@ -44,7 +46,7 @@ describe('createOpenAICompletionSession', () => {
     const response = await session.sendPrompt(prompt);
 
     expect(openaiClient.chat.completions.create).toHaveBeenCalledWith({
-      ...completionOptions,
+      ...completionOptions.openaiConfig,
       messages: [
         { role: 'system', content: 'You are an AI assistant that helps people find information.' },
         { role: 'user', content: prompt },

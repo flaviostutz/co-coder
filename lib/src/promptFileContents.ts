@@ -24,7 +24,7 @@ export type PromptFileContentsArgs = {
    */
   previewContentsRegexes?: string[];
   /**
-   * Preview contents max file size. Larger files will be truncated. Defaults to 400
+   * Preview contents max file size. Larger files will be truncated. Defaults to 100
    */
   previewContentsMaxFileSize?: number;
   /**
@@ -59,6 +59,16 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
     throw new Error(`Directory ${args.baseDir} does not exist`);
   }
 
+  let { fullContentsMaxFileSize } = args;
+  if (!fullContentsMaxFileSize) {
+    fullContentsMaxFileSize = 4000;
+  }
+
+  let { previewContentsMaxFileSize } = args;
+  if (!previewContentsMaxFileSize) {
+    previewContentsMaxFileSize = 100;
+  }
+
   let outputFullContents = '';
   let outputPreviewContents = '';
 
@@ -80,9 +90,9 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
           );
           if (fileRegexMatch) {
             let contents = fs.readFileSync(fullPath, 'utf8');
-            if (args.fullContentsMaxFileSize && contents.length > args.fullContentsMaxFileSize) {
+            if (fullContentsMaxFileSize && contents.length > fullContentsMaxFileSize) {
               console.log(`Truncating file ${fullPath}: too large`);
-              contents = contents.substring(0, args.fullContentsMaxFileSize);
+              contents = contents.substring(0, fullContentsMaxFileSize);
             }
             outputFullContents += `File ${relativePath}: \`\`\`${contents}\`\`\`\n\n`;
           }
@@ -95,11 +105,8 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
           );
           if (fileRegexMatch) {
             let contents = fs.readFileSync(fullPath, 'utf8');
-            if (
-              args.previewContentsMaxFileSize &&
-              contents.length > args.previewContentsMaxFileSize
-            ) {
-              contents = contents.substring(0, args.previewContentsMaxFileSize);
+            if (previewContentsMaxFileSize && contents.length > previewContentsMaxFileSize) {
+              contents = contents.substring(0, previewContentsMaxFileSize);
             }
             outputPreviewContents += `File ${relativePath}: \`\`\`${contents}\`\`\`\n\n`;
           }

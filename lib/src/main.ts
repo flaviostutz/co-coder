@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
+import path from 'path';
+
 import yargs from 'yargs';
 import openai, { OpenAI, AzureOpenAI } from 'openai';
 import { DefaultAzureCredential, getBearerTokenProvider } from '@azure/identity';
@@ -66,33 +68,39 @@ type Args = {
           .option('output', {
             describe: 'Output directory for generated files by the prompt',
             type: 'string',
-            default: 'out',
+            default: '.out',
             demandOption: false,
           })
-          .option('api.provider', {
+          .option('max-tokens', {
+            describe: 'Max number of tokens to send to the API in a single request',
+            type: 'string',
+            default: '4000',
+            demandOption: false,
+          })
+          .option('api-provider', {
             describe: 'API provider. One of "openai" or "azure"',
             type: 'string',
             default: 'openai',
             demandOption: false,
           })
-          .option('api.url', {
+          .option('api-url', {
             describe:
               'API url. e.g. "https://localhost:1234". If using Azure, it\'s required to use the endpoint URL from Azure',
             type: 'string',
             demandOption: false,
           })
-          .option('api.auth', {
+          .option('api-auth', {
             describe: 'API auth method. One of "token" or "apikey"',
             type: 'string',
             default: 'apikey',
             demandOption: false,
           })
-          .option('api.key', {
+          .option('api-key', {
             describe: 'OpenAI API key',
             type: 'string',
             demandOption: false,
           })
-          .option('api.azure.version', {
+          .option('api-azure-version', {
             describe: 'Azure API version. Required when using Azure provider',
             type: 'string',
             default: '2024-02-01',
@@ -104,12 +112,11 @@ type Args = {
         // openai client configuration
         let openAIClient;
 
-        const apiKey = argv['api.key'];
-
-        const apiAuth = defaultValue(argv['api.auth'], 'apikey');
+        const apiKey = argv['api-key'];
+        const apiAuth = defaultValue(argv['api-auth'], 'apikey');
         if (apiAuth === 'apikey') {
           if (!apiKey) {
-            console.log('"api.key" is required when auth is "apikey"');
+            console.log('"api-key" is required when auth is "apikey"');
             process.exit(1);
           }
         }
@@ -117,7 +124,7 @@ type Args = {
         const task = defaultValue(argv.task, null);
         const files = defaultValue(argv.files, null);
         const model = defaultValue(argv.model, null);
-        const apiProvider = defaultValue(argv['api.provider'], 'openai');
+        const apiProvider = defaultValue(argv['api-provider'], 'openai');
 
         if (!task) {
           console.log('"task" is required');
@@ -132,17 +139,17 @@ type Args = {
           process.exit(1);
         }
         if (!apiProvider) {
-          console.log('"api.provider" is required');
+          console.log('"api-provider" is required');
           process.exit(1);
         }
 
         // Azure provider
-        if (argv['api.provider'] === 'azure') {
+        if (argv['api-provider'] === 'azure') {
           let azureADTokenProvider;
 
-          const endpoint = argv['api.url'];
+          const endpoint = argv['api-url'];
           if (!endpoint) {
-            console.log('"api.url" is required when provider is "azure"');
+            console.log('"api-url" is required when provider is "azure"');
             process.exit(1);
           }
 
@@ -156,7 +163,7 @@ type Args = {
           openAIClient = new AzureOpenAI({
             deployment: model,
             endpoint,
-            apiVersion: defaultValue(argv['api.azure.version'], '2024-02-01'),
+            apiVersion: defaultValue(argv['api-azure-version'], '2024-02-01'),
             apiKey,
             azureADTokenProvider,
           });
@@ -168,7 +175,7 @@ type Args = {
             process.exit(1);
           }
           openAIClient = new OpenAI({
-            baseURL: argv['api.url'],
+            baseURL: argv['api-url'],
             apiKey,
           });
         }
@@ -189,7 +196,8 @@ type Args = {
             },
             openAIClient,
             model,
-            outputDir: defaultValue(argv.output, 'out') as string,
+            maxTokens: parseInt(defaultValue(argv['max-tokens'], '4000') as string, 10),
+            outputDir: path.join(process.cwd(), defaultValue(argv.output, '.out') as string),
           });
 
           // show results

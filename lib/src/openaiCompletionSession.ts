@@ -19,29 +19,33 @@ export type SendPromptResponse = {
   tokenCount?: number;
 };
 
-export type CompletionOptions = {
+export type CompletionOpenAIParams = {
   model: openai.ChatModel;
   seed?: number | null;
   temperature?: number | null;
-  topP?: number | null;
-  frequencyPenalty?: number | null;
-  presencePenalty?: number | null;
+  top_p?: number | null;
+  frequency_penalty?: number | null;
+  presence_penalty?: number | null;
   /**
    * Maximum number of tokens that the API is allowed to generate in their answers
    */
-  maxTokens?: number | null;
+  max_tokens?: number | null;
   stop?: string | null;
+};
+
+export type CompletionOptions = {
+  openaiConfig: CompletionOpenAIParams;
   /**
    * Maximum number of allowed prompts sent to the model in this session
    * This is a safety measure to prevent infinite loops and overuse of the API in case of bugs
-   * Defaults to 20
+   * Defaults to 5
    */
   maxPrompts?: number;
   /**
    * Maximum number of tokens allowed to be generated in this session
    * This is the sum of all request and response tokens sent/received in this session
    * This is a safety measure to prevent generating too much content that might indicate bugs even before invoking the API
-   * Defaults to 128000 tokens
+   * Defaults to 4000 tokens
    */
   maxConversationTokens?: number;
 };
@@ -54,10 +58,11 @@ export const createOpenAICompletionSession = (
     { role: 'system', content: 'You are an AI assistant that helps people find information.' },
   ];
   let promptCounter = 0;
-  const maxPrompts = completionOptions.maxPrompts || 20;
+  const maxPrompts = completionOptions.maxPrompts || 5;
 
   return {
     sendPrompt: async (prompt: string): Promise<SendPromptResponse> => {
+      console.log(`\n\n>>> SENDING PROMPT`);
       // check max prompts
       promptCounter += 1;
       if (promptCounter > maxPrompts) {
@@ -66,7 +71,7 @@ export const createOpenAICompletionSession = (
       conversation.push({ role: 'user', content: prompt });
 
       // check max tokens in this session
-      const maxTokens = completionOptions.maxConversationTokens || 128000;
+      const maxTokens = completionOptions.maxConversationTokens || 4000;
       // '_' is added because if input is empty, isWithinTokenLimit function returns false
       const fullContents = `_ ${JSON.stringify(conversation.map((m) => m.content))}`;
       if (!isWithinTokenLimit(fullContents, maxTokens)) {
@@ -79,7 +84,7 @@ export const createOpenAICompletionSession = (
 
       // send request to openai api
       const response = await openaiClient.chat.completions.create({
-        ...completionOptions,
+        ...completionOptions.openaiConfig,
         messages: conversation,
         stream: false,
       });
