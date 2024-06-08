@@ -1,4 +1,4 @@
-import { promptFileContents } from './promptFileContents';
+import { PromptFileContentsArgs, promptFileContents } from './promptFileContents';
 
 /**
  * Arguments for generating a code prompt
@@ -15,28 +15,13 @@ export type CodePromptGeneratorArgs = {
    * Add here informations such as the project's purpose, the technologies used, the structure of the project, etc.
    * You can use markdown format to make the content more readable.
    */
-  projectInformation: string;
+  projectInformation?: string;
   /**
    * Workspace files that will be sent along with the prompt to the OpenAI API so it can use it as a context to generate the codes.
    * It will use these files to understand the structure of the project, technologies used and other informations that can help to generate the code.
    * @required
    */
-  workspaceFiles: {
-    /**
-     * Base directory where the workspace files are located
-     * @required
-     */
-    baseDir: string;
-    /**
-     * Array of regex to filter files
-     * @required
-     */
-    fileRegexes: string[];
-    /**
-     * Maximum individual file size to be included in the prompt. Larger files will be truncated. Defaults to 1000
-     */
-    maxFileSize?: number;
-  };
+  workspaceFiles: PromptFileContentsArgs;
   /**
    * Example of the task to be performed. It will be added to the prompt as an example of the task that must be performed by the model.
    * You fully describe an example for the task, or indicate which files or folders can be used as an example and it will try to generate a code based on this example.
@@ -53,11 +38,11 @@ export type CodePromptGeneratorArgs = {
  * @returns {string} Model prompt tailored for generating code
  */
 export const codePromptGenerator = (args: CodePromptGeneratorArgs): string => {
-  const workspaceFiles = promptFileContents(
-    args.workspaceFiles.baseDir,
-    args.workspaceFiles.fileRegexes,
-    args.workspaceFiles.maxFileSize,
-  );
+  const workspaceFilesContents = promptFileContents(args.workspaceFiles);
+
+  if (!args.taskDescription) {
+    throw new Error('taskDescription should be non empty');
+  }
 
   return `
   ## Instructions
@@ -112,7 +97,7 @@ ${args.taskDescription}
 
 ### Project information
 
-${args.projectInformation}
+${checkValidString(args.projectInformation, 'No specific project information')}
 
 ## Input Data
 
@@ -120,20 +105,38 @@ ${args.projectInformation}
 
 ### Workspace files
 
+### Full content files
+
 * This is the workspace where the developer works and where the source code of our system resides. All generated files should be located in this structure
 
-${workspaceFiles}
+${checkValidString(workspaceFilesContents.fullFileContents, 'No files')}
+
+#### File previews
+
+${checkValidString(workspaceFilesContents.previewFileContents, 'No files')}
 
 ### Example
 
-{example}
+${checkValidString(
+  args.example,
+  'Do a best effort to generate code based on the structure and examples present in workspace files',
+)}
 
 ## Output Indicator
 
-* If source code was generated, start the output with "outcome: code-generated" and generate file output contents using the following template: "File: {file name with relative path}: \`\`\`{file contents}\`\`\`" 
+* If source code was generated, start the output with "outcome: code-generated" and generate file output contents using the following template: "File {file name with relative path}: \`\`\`{file contents}\`\`\`" 
 * If asking for more files, start the output with "outcome: files-requested" followed by the list of requested files using the format "File: {file name}"
 * If you have more source codes that could be generated, indicate that with the text "note: more-codes-to-be-generated"
 * Don't explain the reasoning, only generate code or questions
 
 `;
+};
+
+// check if variable is non empty and a valid string
+const checkValidString = (str: string | null | undefined, messageIfNot: string): string => {
+  const valid = typeof str !== 'undefined' && str !== null && str.trim() !== '';
+  if (!valid) {
+    return messageIfNot;
+  }
+  return str;
 };

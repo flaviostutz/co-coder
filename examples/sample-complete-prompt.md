@@ -451,9 +451,9 @@ File sample.wsdl:
 
 ## Output Indicator
 
-* If source code was generated, start the output with "outcome: code-generated" and generate file output contents using the following template: "File: {file name with relative path}: ```{file contents}```" 
+* If source code was generated, start the output with "outcome: code-generated" and generate file output contents using the following template: "File {file name with relative path}: ```{file contents}```" 
 
-* If asking for more files, start the output with "outcome: files-requested" followed by the list of requested files using the format "File: {file name} ({relevance score})"
+* If asking for more files, start the output with "outcome: files-requested" followed by the list of requested files using the format "File {file name} ({relevance score})"
 
 * If you have more source codes that could be generated, indicate that with the text "note: more-codes-to-be-generated"
 

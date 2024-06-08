@@ -4,7 +4,7 @@ export type OutputFile = {
 };
 
 export const parseOutputFiles = (outputText: string): OutputFile[] => {
-  const regex = /File: (.*?): ```(.*?)```/gs;
+  const regex = /File (.*?): ```(.*?)```/gs;
   let match = regex.exec(outputText);
   const outputFiles = [];
 

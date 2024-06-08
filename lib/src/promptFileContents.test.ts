@@ -15,12 +15,19 @@ describe('describeWorkspace', () => {
     fs.writeFileSync(matchingFile2, 'This is a test file2');
     fs.writeFileSync(nonMatchingFile, 'This is another test file');
 
-    const output = promptFileContents(tempDir, ['\\.txt$', '\\.txt2$']);
+    const output = promptFileContents({
+      baseDir: tempDir,
+      fullContentsRegexes: ['\\.txt$', '\\.txt2$'],
+    });
 
-    expect(output).toMatch(`File: ${matchingFile}: \`\`\`This is a test file\`\`\`\n\n`);
-    expect(output).toMatch(`File: ${matchingFile2}: \`\`\`This is a test file2\`\`\`\n\n`);
-    expect(output).not.toMatch(
-      `File: ${nonMatchingFile}: \`\`\`This is another test file\`\`\`\n\n`,
+    expect(output.fullFileContents).toMatch(
+      `File ${path.relative(tempDir, matchingFile)}: \`\`\`This is a test file\`\`\`\n\n`,
+    );
+    expect(output.fullFileContents).toMatch(
+      `File ${path.relative(tempDir, matchingFile2)}: \`\`\`This is a test file2\`\`\`\n\n`,
+    );
+    expect(output.fullFileContents).not.toMatch(
+      `File ${path.relative(tempDir, nonMatchingFile)}: \`\`\`This is another test file\`\`\`\n\n`,
     );
 
     fs.unlinkSync(matchingFile);
@@ -35,11 +42,46 @@ describe('describeWorkspace', () => {
 
     fs.writeFileSync(largeFile, 'a'.repeat(4000));
 
-    const output = promptFileContents(tempDir, ['\\.txt$'], 3000);
+    const output = promptFileContents({
+      baseDir: tempDir,
+      fullContentsRegexes: ['\\.txt$'],
+      fullContentsMaxFileSize: 3000,
+    });
 
-    expect(output).toMatch(`File: ${largeFile}: \`\`\`${'a'.repeat(3000)}\`\`\`\n\n`);
+    expect(output.fullFileContents).toMatch(
+      `File largeFile.txt: \`\`\`${'a'.repeat(3000)}\`\`\`\n\n`,
+    );
 
     fs.unlinkSync(largeFile);
+    fs.rmdirSync(tempDir);
+  });
+
+  it('should create full and preview contents', () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'test-'));
+    const largeFile = path.join(tempDir, 'largeFile.txt');
+    const largeFile2 = path.join(tempDir, 'largeFile2.txt2');
+
+    fs.writeFileSync(largeFile, 'a'.repeat(5000));
+    fs.writeFileSync(largeFile2, 'b'.repeat(5000));
+
+    const output = promptFileContents({
+      baseDir: tempDir,
+      fullContentsRegexes: ['\\.txt$'],
+      fullContentsMaxFileSize: 3000,
+      previewContentsRegexes: ['\\.txt2$'],
+      previewContentsMaxFileSize: 300,
+    });
+
+    expect(output.fullFileContents).toMatch(
+      `File largeFile.txt: \`\`\`${'a'.repeat(3000)}\`\`\`\n\n`,
+    );
+
+    expect(output.previewFileContents).toMatch(
+      `File largeFile2.txt2: \`\`\`${'b'.repeat(300)}\`\`\`\n\n`,
+    );
+
+    fs.unlinkSync(largeFile);
+    fs.unlinkSync(largeFile2);
     fs.rmdirSync(tempDir);
   });
 });

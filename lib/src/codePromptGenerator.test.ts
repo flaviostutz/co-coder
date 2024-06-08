@@ -15,7 +15,7 @@ describe('codePromptGenerator', () => {
       projectInformation: 'Test project information',
       workspaceFiles: {
         baseDir: tempDir,
-        fileRegexes: ['\\.txt$'],
+        fullContentsRegexes: ['\\.txt$'],
       },
       example: 'Test example',
     };
@@ -24,7 +24,7 @@ describe('codePromptGenerator', () => {
 
     expect(output).toContain('## Instructions');
     expect(output).toContain('Fix errors proactively');
-    files.forEach((file) => expect(output).toContain(`File: ${path.join(tempDir, file)}`));
+    files.forEach((file) => expect(output).toContain(`File ${file}`));
 
     files.forEach((file) => fs.unlinkSync(path.join(tempDir, file)));
     fs.rmdirSync(tempDir);
