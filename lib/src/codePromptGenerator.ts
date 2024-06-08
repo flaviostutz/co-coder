@@ -1,19 +1,62 @@
 import { promptFileContents } from './promptFileContents';
 
+/**
+ * Arguments for generating a code prompt
+ */
 export type CodePromptGeneratorArgs = {
+  /**
+   * Description of the task to be performed. It will be added to the prompt as the main task that must be performed by the model.
+   * A bunch of other instructions will be added besides this task to the prompt that is sent to OpenAI API
+   * @required
+   */
   taskDescription: string;
+  /**
+   * Information about the project that the task is related to. It will be added to the prompt as the context of the task.
+   * Add here informations such as the project's purpose, the technologies used, the structure of the project, etc.
+   * You can use markdown format to make the content more readable.
+   */
   projectInformation: string;
+  /**
+   * Workspace files that will be sent along with the prompt to the OpenAI API so it can use it as a context to generate the codes.
+   * It will use these files to understand the structure of the project, technologies used and other informations that can help to generate the code.
+   * @required
+   */
   workspaceFiles: {
+    /**
+     * Base directory where the workspace files are located
+     * @required
+     */
     baseDir: string;
+    /**
+     * Array of regex to filter files
+     * @required
+     */
     fileRegexes: string[];
+    /**
+     * Maximum individual file size to be included in the prompt. Larger files will be truncated. Defaults to 1000
+     */
+    maxFileSize?: number;
   };
+  /**
+   * Example of the task to be performed. It will be added to the prompt as an example of the task that must be performed by the model.
+   * You fully describe an example for the task, or indicate which files or folders can be used as an example and it will try to generate a code based on this example.
+   * e.g.: "Use workspace files under folder `packages/reference-runner` as an example"
+   */
   example: string;
 };
 
+/**
+ * Generate a code prompt to be sent to OpenAI API
+ * This will get a base task description and add a bunch of other instructions to the prompt that is sent to OpenAI API
+ * in order to generate code based on the task description.
+ * @param args {CodePromptGeneratorArgs}
+ * @returns {string} Model prompt tailored for generating code
+ */
 export const codePromptGenerator = (args: CodePromptGeneratorArgs): string => {
   const workspaceFiles = promptFileContents(
     args.workspaceFiles.baseDir,
     args.workspaceFiles.fileRegexes,
+    args.workspaceFiles.maxFileSize,
   );
 
   return `
