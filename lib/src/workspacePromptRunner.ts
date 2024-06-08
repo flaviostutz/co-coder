@@ -58,7 +58,7 @@ export type WorkspacePromptRunnerArgs = Pick<
 };
 
 /**
- * Generate a code generation prompt, send it to OpenAI API, process its response (sometimes it will send additional files as requested by the model) and write the generated files to the output directory
+ * Generate prompt based on workspace file, send it to OpenAI API, process its response (sometimes it will send additional files as requested by the model) and write any generated files to the output directory
  * @param args {WorkspacePromptRunnerArgs}
  */
 export const workspacePromptRunner = async (args: WorkspacePromptRunnerArgs): Promise<void> => {
@@ -94,18 +94,19 @@ const sendAndProcessWorkspacePrompt = async (
       model: args.model,
       temperature: 0, // make the output more deterministic amongst calls
       seed: 0, // make the output more deterministic amongst calls
-      top_p: 0.95,
+      topP: 0.95,
     });
   }
   console.log(`>> Sending prompt: ${args.prompt}`);
   const output = await chatSession.sendPrompt(args.prompt);
   const responseOutput = output.response;
 
-  console.log(`>> Response: ${responseOutput}`);
+  console.log(`>> Response: ${responseOutput}. tokens=${output.tokenCount}`);
 
   // CODE GENERATED
   if (responseOutput.indexOf('outcome: code-generated') > -1) {
     const outputFiles = parseOutputFiles(responseOutput);
+    console.log(`Writing ${outputFiles.length} files to ${args.outputDir}`);
 
     outputFiles.forEach((file) => {
       const filePath = path.join(args.outputDir, file.filename);
@@ -137,17 +138,21 @@ const sendAndProcessWorkspacePrompt = async (
       .filter((file) => file.relevanceScore > 0.5)
       .map((file) => file.fileName);
 
-    const requestedFilesPrompt = promptFileContents(args.workspaceDir, sendFilesRegexes);
+    const requestedFilesPrompt = promptFileContents({
+      baseDir: args.workspaceDir,
+      fullContentsRegexes: sendFilesRegexes,
+    });
+
     selfFilePaths = await sendAndProcessWorkspacePrompt(
       {
         ...args,
         openAICompletionSession: chatSession,
-        prompt: requestedFilesPrompt,
+        prompt: requestedFilesPrompt.fullFileContents,
       },
       selfFilePaths,
     );
   } else {
-    throw new Error(`Unexpected response from ChatGPT: ${responseOutput}`);
+    throw new Error(`Unexpected response from model: ${responseOutput}`);
   }
   return selfFilePaths;
 };
@@ -155,9 +160,9 @@ const sendAndProcessWorkspacePrompt = async (
 const parseFileList = (responseOutput: string): { fileName: string; relevanceScore: number }[] => {
   const fileList = responseOutput.split('\n');
   return fileList
-    .filter((file) => file.startsWith('File:'))
+    .filter((file) => file.startsWith('File '))
     .map((file) => {
-      const match = file.match(/File: (.*) \((.*)\)/);
+      const match = file.match(/File (.*) \((.*)\)/);
       if (match) {
         return {
           fileName: match[1],

@@ -11,7 +11,14 @@ describe('createOpenAICompletionSession', () => {
   let session: ReturnType<typeof createOpenAICompletionSession>;
 
   beforeEach(() => {
-    openaiClient = new OpenAI() as jest.Mocked<OpenAI>;
+    // mock OpenAI client
+    openaiClient = {
+      chat: {
+        completions: {
+          create: jest.fn(),
+        },
+      },
+    } as any;
     completionOptions = {
       model: 'gpt-3.5-turbo',
       temperature: 0.7,
@@ -41,10 +48,69 @@ describe('createOpenAICompletionSession', () => {
       messages: [
         { role: 'system', content: 'You are an AI assistant that helps people find information.' },
         { role: 'user', content: prompt },
+        // this line below is only there because we mutation the conversation object and mock is being confused. it shouldn't be here actually
+        { role: 'assistant', content: expectedCompletion },
       ],
       stream: false,
     });
-    expect(response).toBe(expectedCompletion);
+
+    expect(response.response).toEqual(expectedCompletion);
+    expect(response.conversation.length).toBe(3);
+    expect(response.conversation).toStrictEqual([
+      { role: 'system', content: 'You are an AI assistant that helps people find information.' },
+      { role: 'user', content: prompt },
+      { role: 'assistant', content: expectedCompletion },
+    ]);
+  });
+
+  it('should fail if session tokens gets too large', async () => {
+    const prompt = 'Hello, AI!';
+    const expectedCompletion = 'Hello, human!';
+
+    const session2 = createOpenAICompletionSession(openaiClient, {
+      ...completionOptions,
+      maxConversationTokens: 20,
+    });
+
+    (openaiClient.chat.completions.create as jest.Mock).mockResolvedValue({
+      id: 'test-id',
+      object: 'chat.completion',
+      created: 1234567890,
+      model: 'gpt-3.5-turbo',
+      usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
+      choices: [
+        { message: { role: 'assistant', content: expectedCompletion }, finish_reason: 'stop' },
+      ],
+    });
+
+    await session2.sendPrompt(prompt);
+    await expect(session2.sendPrompt(prompt)).rejects.toThrow(
+      'Total tokens in this session exceeded limit. ',
+    );
+  });
+
+  it('should fail if sending too many prompts to this session', async () => {
+    const prompt = 'Hello, AI!';
+    const expectedCompletion = 'Hello, human!';
+
+    const session2 = createOpenAICompletionSession(openaiClient, {
+      ...completionOptions,
+      maxPrompts: 1,
+    });
+
+    (openaiClient.chat.completions.create as jest.Mock).mockResolvedValue({
+      id: 'test-id',
+      object: 'chat.completion',
+      created: 1234567890,
+      model: 'gpt-3.5-turbo',
+      usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
+      choices: [
+        { message: { role: 'assistant', content: expectedCompletion }, finish_reason: 'stop' },
+      ],
+    });
+
+    await session2.sendPrompt(prompt);
+    await expect(session2.sendPrompt(prompt)).rejects.toThrow('Too many prompts in this session');
   });
 
   it('should send three prompts and receive three completions', async () => {
@@ -100,7 +166,7 @@ describe('createOpenAICompletionSession', () => {
     for (let i = 0; i < prompts.length; i += 1) {
       // eslint-disable-next-line no-await-in-loop
       lastResponse = await session.sendPrompt(prompts[i]);
-      expect(lastResponse.conversation).toBe(expectedCompletions[i]);
+      expect(lastResponse.response).toBe(expectedCompletions[i]);
     }
 
     expect(lastResponse?.conversation.length).toBe(7);
