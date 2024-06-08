@@ -3,14 +3,18 @@ SHELL := /bin/bash
 build: install
 	@rm -rf dist
 
-	@# Don't bundle so internal CDK constructs continue working on clients
-	pnpm exec tsc --outDir dist
+	@# lib build
+	npx esbuild src/index.ts --bundle --platform=node --minify --outfile=dist/index.js
 
-	@# remove all tests from distribution
-	@-find -E ./dist -regex '.*\.test\..*|.*__tests.*' -exec rm -rf {} \; 2> /dev/null
+	@# cli build
+	npx esbuild src/main.ts --bundle --platform=node --minify --outfile=dist/main.js
+	npx tsc --emitDeclarationOnly --outDir dist
 
 	@# Create pack to be used by examples app to simulate real usage of the lib
 	pnpm pack --pack-destination dist
+
+run:
+	pnpm exec ts-node src/main.ts run
 
 lint:
 	pnpm exec eslint ./src --ext .ts
