@@ -2,8 +2,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { encode, isWithinTokenLimit } from 'gpt-tokenizer';
-
 export type PromptFileContentsArgs = {
   /**
    * Base directory where the workspace files are located
