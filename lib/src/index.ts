@@ -1,4 +1,4 @@
 export * from './promptFileContents';
 export * from './simplifyOpenapiSpec';
-export * from './parseOutputFiles';
+export * from './parsePromptOutput';
 export * from './codePromptGenerator';
