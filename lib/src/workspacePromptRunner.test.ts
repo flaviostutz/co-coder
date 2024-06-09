@@ -30,8 +30,15 @@ describe('workspacePromptRunner', () => {
 
   it('should run a prompt using workspacePromptRunner()', async () => {
     const prompt = 'This is a sample prompt.';
-    const expectedCompletion = `outcome: code-generated
-  No code generated. Only comments`;
+    const expectedCompletion = JSON.stringify({
+      outcome: 'codes-generated',
+      files: [
+        {
+          filename: 'new-code.txt',
+          contents: 'TEST CODE',
+        },
+      ],
+    });
 
     openAIClient.chat.completions.create.mockResolvedValue({
       id: 'test-id',
@@ -59,11 +66,11 @@ describe('workspacePromptRunner', () => {
       outputDir: tempDir,
     });
 
-    // check if tempDir is 5, meaning no new files were generated
+    // check if tempDir is 6, meaning one new files was generated
     const files = fs.readdirSync(tempDir);
-    expect(files).toHaveLength(5);
+    expect(files).toHaveLength(6);
 
-    expect(result).toBeUndefined();
+    expect(result).toBeDefined();
   });
 
   it('should send additional files if requested by the model', async () => {
@@ -80,9 +87,10 @@ describe('workspacePromptRunner', () => {
         {
           message: {
             role: 'assistant',
-            content: `outcome: files-requested
-        File unknown-additional-file.txt
-        File file5.txt`,
+            content: JSON.stringify({
+              outcome: 'files-requested',
+              files: [{ filename: 'unknown-additional-file.txt' }, { filename: 'file5.txt' }],
+            }),
           },
           finish_reason: 'stop',
         },
@@ -100,8 +108,15 @@ describe('workspacePromptRunner', () => {
         {
           message: {
             role: 'assistant',
-            content: `outcome: code-generated
-        File new-code.txt: \`\`\`THIS IS A NEW CODE!!\`\`\``,
+            content: JSON.stringify({
+              outcome: 'codes-generated',
+              files: [
+                {
+                  filename: 'new-code.txt',
+                  contents: 'THIS IS A NEW CODE!!',
+                },
+              ],
+            }),
           },
           finish_reason: 'stop',
         },
@@ -125,7 +140,7 @@ describe('workspacePromptRunner', () => {
 
     expect(openAIClient.chat.completions.create).toHaveBeenCalledTimes(2);
 
-    expect(result).toBeUndefined();
+    expect(result).toBeDefined();
   });
 
   it('should generate code and write to workspace dir', async () => {
@@ -142,8 +157,15 @@ describe('workspacePromptRunner', () => {
         {
           message: {
             role: 'assistant',
-            content: `outcome: code-generated
-        File new-code.txt: \`\`\`THIS IS A NEW CODE!!\`\`\``,
+            content: JSON.stringify({
+              outcome: 'codes-generated',
+              files: [
+                {
+                  filename: 'new-code.txt',
+                  contents: 'THIS IS A NEW CODE!!',
+                },
+              ],
+            }),
           },
           finish_reason: 'stop',
         },
@@ -171,7 +193,7 @@ describe('workspacePromptRunner', () => {
     const newCodeContents = fs.readFileSync(path.join(tempDir, 'new-code.txt'), 'utf-8');
     expect(newCodeContents).toBe('THIS IS A NEW CODE!!');
 
-    expect(result).toBeUndefined();
+    expect(result.generatedFiles[0]).toBe(path.join(tempDir, 'new-code.txt'));
   });
   afterEach(() => {
     // clean up the temporary directory

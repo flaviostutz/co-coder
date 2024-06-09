@@ -54,10 +54,12 @@ ${args.taskDescription}
   ### Approach
   
   1. Analyse the request, but don't generate any codes yet
+
+  2. Always generate the output according to the "Output Indicator" instructions
   
-  2. Which additional files would you want to see its contents to help you improving the solution? Answer with the list of files ordered by relevance (most relevant first). Only request files that you didn't receive yet and limit this list to the 20 most important files.
-  
-  3. After you receive the required files, proceed with code generation starting the output with "outcome: code-generated"
+  3. Which additional files would you want to see its contents to help you improving the solution? Answer with the list of files ordered by relevance (most relevant first). Only request files that you didn't receive yet and limit this list to the 30 most important files.
+
+  4. After you receive the required files, proceed with code generation
 
 ## Context
 
@@ -124,10 +126,26 @@ ${checkValidString(
 
 ## Output Indicator
 
-* If source code was generated, start the output with "outcome: code-generated" and generate file output contents using the following template: "File {file name with relative path}: \`\`\`{file contents}\`\`\`" 
-* If asking for more files, start the output with "outcome: files-requested" followed by the list of requested files using the format "File: {file name}"
-* If you have more source codes that could be generated, indicate that with the text "note: more-codes-to-be-generated"
-* Don't explain the reasoning, only generate code or questions
+* All your answers should be written using json format following the template below:
+\`\`\`json
+{
+  "outcome": "{one of: codes-generated, files-requested, notes-generated}",
+  "files": [
+    {
+      "filename": "{filename relative to workspace path}",
+      "contents": "{file contents}",
+      "relevance": "{score from 1 to 10 of the file relevance in the context of the task}"
+    }
+  ],
+  "notes": ["{note1}", "{note2}"]
+  "hasMoreToGenerate": true
+}
+\`\`\`
+* If source code was generated set outcome to "codes-generated" and include the generated files in the "files" array
+* If asking for more files, set outcome to "files-requested" and include the list of requested files in the "files" array without the contents
+* If notes were generated, but no source code, set outcome to "notes-generated" and include the notes in the "notes" array
+* If you have more source codes that could be generated, set "hasMoreToGenerate" to true. Otherwise, set it to false
+* Don't explain the reasoning, only generate code, ask for files or generate notes
 
 `;
 };
