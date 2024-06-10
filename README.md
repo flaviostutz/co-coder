@@ -17,14 +17,14 @@ The difference to Github Co-Pilot is that you can use more advanced OpenAI model
 To use the CLI tool, you can use the run command followed by various options:
 
 ```
-npx co-coder run --task <task> --workspace <workspace> [options]
+npx co-coder run --task <task description> --workspace <workspace dir> [options]
 ```
 
 ### Options
 
 --task: This is the task to be performed in the context of the workspace files. This option is required.
 
---workspace: This is the base directory with workspace files. This option is required.
+--workspace: This is the base directory with workspace files.
 
 --files: This is an array of file paths relative to the workspace directory. These files will be included in the prompt sent to the model.
 
@@ -48,7 +48,7 @@ Here are a few examples of how to use the CLI tool:
 npx co-coder run --task "refactor code"
 ```
 
-This command will run the prompt "refactor code" over all files in the current workspace and output its results to folder ".out"
+This command will run the prompt "refactor code" over all files in the current dir and output its results to folder ".out"
 
 ```
 cli-tool run --task "generate unit tests" --files ["src/app.ts"] --output "."
