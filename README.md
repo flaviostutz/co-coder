@@ -2,29 +2,56 @@
 
 This library aim making LLM engines able to generate code in the context of a project, not only for generating pieces of code for specific problems, but to reason what is the project structure, architecture, conventions and to create new files or update existing ones to solve a certain task.
 
-The generated code is supposed to be a good starting point for the developer to implement business rules, check and fix bugs. LLM will do the boring job of creating folders, files and basic code structures when the dev is starting to develop a new feature.
-
 See [examples/](/examples/) folder for a showcase
 
 ## Concepts
 
 We will structure the LLM prompts with the different aspects that have to be taken into account while working in a real project, such as "architecture", "tech stack", "coding conventions", "workspace files", "task breakdown example", "task".
 
-It's a good idea to use some file simplifiers so that we reduce the number of required tokens for certain contents, such as "openapis" before sending its contents to the LLM.
+The difference to Github Co-Pilot is that you can use more advanced OpenAI models with much larger contexts to process more complex tasks that involves the entire workspace, for example. For simple tasks, Co-Pilot is the way to go.
 
-## Ideas to explore
+## Usage
 
-* Send the tree of file names and ask if LLM wants to see the contents of more files. Provide them as necessary then
+## CLI tool
 
-* Divide into two calls: one with the overall project structure and example, and another with the specific task request, that can then used for multiple requests without adding more tokens (related to all the project structure etc) to the context.
+To use the CLI tool, you can use the run command followed by various options:
 
-* Experiment with [Self Consistency](https://www.promptingguide.ai/techniques/consistency) and [Tree of Thoughts (ToT)](https://www.promptingguide.ai/techniques/tot)" in prompt engineering to see if the results are enhanced
+```
+npx co-coder run --task <task> --workspace <workspace> [options]
+```
 
-## APIs
+### Options
 
-* promptFileContents(baseDir: string, filesRegex: string[]): string
+--task: This is the task to be performed in the context of the workspace files. This option is required.
 
-* simplifyOpenapiSpec(openapiContents: string): string
+--workspace: This is the base directory with workspace files. This option is required.
 
-* parseOutputFiles(outputText: string): {filename:string, contents:string}[]
+--files: This is an array of file paths relative to the workspace directory. These files will be included in the prompt sent to the model.
 
+--preview: This is an array of file paths relative to the workspace directory. These files will be included in the prompt sent to the model, but their contents will not be editable.
+
+--model: This is the OpenAI model to use for the task. The default model is text-davinci-002.
+
+--max-tokens-total: This is the maximum total number of tokens that can be used by the tool. The default value is 4096.
+
+--max-tokens-per-request: This is the maximum number of tokens that can be used in a single request. The default value is 4096.
+
+--api-provider: This is the API provider to use. The default provider is openai.
+
+--api-url: This is the URL of the API endpoint to use. The default URL is https://api.openai.com.
+
+### Examples
+
+Here are a few examples of how to use the CLI tool:
+
+```
+npx co-coder run --task "refactor code"
+```
+
+This command will run the prompt "refactor code" over all files in the current workspace and output its results to folder ".out"
+
+```
+cli-tool run --task "generate unit tests" --files ["src/app.ts"] --output "."
+```
+
+This command will generate unit tests for the file src/app.ts in the workspace
