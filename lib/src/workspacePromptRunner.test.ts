@@ -55,8 +55,10 @@ describe('workspacePromptRunner', () => {
       codePromptGeneratorArgs: {
         taskDescription: prompt,
         workspaceFiles: {
-          baseDir: tempDir,
-          fullContentsRegexes: ['.*\\.txt'],
+          fullContents: {
+            baseDir: tempDir,
+            filenameRegexes: ['.*\\.txt'],
+          },
         },
         example: 'Use all files in the workspace as an example.',
         projectInformation: '',
@@ -127,9 +129,14 @@ describe('workspacePromptRunner', () => {
       codePromptGeneratorArgs: {
         taskDescription: prompt,
         workspaceFiles: {
-          baseDir: tempDir,
-          fullContentsRegexes: ['file1\\.txt', 'file2\\.txt'],
-          previewContentsRegexes: ['file3\\.txt'],
+          fullContents: {
+            baseDir: tempDir,
+            filenameRegexes: ['file1\\.txt', 'file2\\.txt'],
+          },
+          previewContents: {
+            baseDir: tempDir,
+            filenameRegexes: ['file3\\.txt'],
+          },
         },
         example: 'Use all files in the workspace as an example.',
       },
@@ -176,8 +183,10 @@ describe('workspacePromptRunner', () => {
       codePromptGeneratorArgs: {
         taskDescription: prompt,
         workspaceFiles: {
-          baseDir: tempDir,
-          fullContentsRegexes: ['file1\\.txt', 'file2\\.txt'],
+          fullContents: {
+            baseDir: tempDir,
+            filenameRegexes: ['file1\\.txt', 'file2\\.txt'],
+          },
         },
         example: 'Use all files in the workspace as an example.',
       },

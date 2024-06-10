@@ -14,17 +14,21 @@ describe('codePromptGenerator', () => {
       taskDescription: 'Test instructions',
       projectInformation: 'Test project information',
       workspaceFiles: {
-        baseDir: tempDir,
-        fullContentsRegexes: ['\\.txt$'],
+        fullContents: {
+          baseDir: tempDir,
+          filenameRegexes: ['\\.txt$'],
+        },
       },
       example: 'Test example',
     };
 
     const output = codePromptGenerator(args);
 
-    expect(output).toContain('## Instructions');
-    expect(output).toContain('Fix errors proactively');
-    files.forEach((file) => expect(output).toContain(`${file}`));
+    expect(output.fullFileContents?.filesProcessed.length).toBe(10);
+    expect(output.previewFileContents).toBeUndefined();
+    expect(output.codePrompt).toContain('## Instructions');
+    expect(output.codePrompt).toContain('Fix errors proactively');
+    files.forEach((file) => expect(output.codePrompt).toContain(`${file}`));
 
     files.forEach((file) => fs.unlinkSync(path.join(tempDir, file)));
     fs.rmdirSync(tempDir);

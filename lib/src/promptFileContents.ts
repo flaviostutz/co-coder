@@ -1,6 +1,7 @@
-/* eslint-disable no-console */
 import * as fs from 'fs';
 import * as path from 'path';
+
+import { isWithinTokenLimit } from 'gpt-tokenizer';
 
 export type PromptFileContentsArgs = {
   /**
@@ -9,41 +10,50 @@ export type PromptFileContentsArgs = {
    */
   baseDir: string;
   /**
-   * Regexes to filter files and get their full contents.
-   * It will be used to get the full contents of the files to be sent to the OpenAI API.
+   * Regexes to filter files and get contents.
+   * It will be used to get the contents of the files to be sent to the OpenAI API.
    * @required
    */
-  fullContentsRegexes?: string[];
+  filenameRegexes: string[];
   /**
-   * Maximum individual file size to be included in the prompt for full files. Larger files will be truncated. Defaults to 4000
+   * Regexes of filenames to ignore so it's contents won't be fetched
+   * even if the filename matches filenameRegexes
    */
-  fullContentsMaxFileSize?: number;
+  ignoreFilenameRegexes?: string[];
   /**
-   * Regexes to filter files and get a preview of their contents.
-   * It will be used to get a preview of the files to be sent to the OpenAI API.
+   * Maximum individual file size to be included in the prompt. Larger files will be truncated
+   * @default 20000
    */
-  previewContentsRegexes?: string[];
+  maxFileSize?: number;
   /**
-   * Preview contents max file size. Larger files will be truncated. Defaults to 100
+   * Max number of tokens with the contents of the files.
+   * Stops processing files if the token limit is reached. This will simply ignore the rest of the files
+   * and return everything that was processed until that point.
+   * This is a safety measure to prevent sending too much data to the API
+   * @default 50000
    */
-  previewContentsMaxFileSize?: number;
-  /**
-   * Fail if the total file contents being discovered reaches this number of tokens
-   * This is a safety measure to prevent sending too much data to the API that will be ignored anyway
-   * Defaults to 128000 tokens
-   */
-  maxContentTokens?: number;
+  maxTokens?: number;
 };
 
 export type PromptFileContentsResponse = {
   /**
-   * Full contents of the files that matched the regexes
+   * Filename and contents of all files that matched the regexes in prompt format
    */
-  fullFileContents: string;
+  fileContentsPrompt: string;
   /**
-   * Preview contents of the files that matched the regexes
+   * Total files that were added to the response as a prompt
+   * These include truncated and complete files
    */
-  previewFileContents: string;
+  filesProcessed: string[];
+  /**
+   * Total files that were skipped because the total token limit was reached
+   */
+  filesSkipped: string[];
+  /**
+   * Total files that were truncated because they were too large (related to maxSize)
+   * These files were added to the response, but their contents were truncated
+   */
+  filesTruncated: string[];
 };
 
 /**
@@ -59,23 +69,27 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
     throw new Error(`Directory ${args.baseDir} does not exist`);
   }
 
-  let { fullContentsMaxFileSize } = args;
-  if (!fullContentsMaxFileSize) {
-    fullContentsMaxFileSize = 4000;
+  let { maxFileSize } = args;
+  if (!maxFileSize) {
+    maxFileSize = 20000;
   }
 
-  let { previewContentsMaxFileSize } = args;
-  if (!previewContentsMaxFileSize) {
-    previewContentsMaxFileSize = 100;
+  let fileContentsPrompt = '';
+
+  let { maxTokens } = args;
+  if (!maxTokens) {
+    maxTokens = 50000;
   }
 
-  let outputFullContents = '';
-  let outputPreviewContents = '';
+  const filesProcessed: string[] = [];
+  const filesSkipped: string[] = [];
+  const filesTruncated: string[] = [];
 
   const traverseDirectory = (dirPath: string): void => {
     const items = fs.readdirSync(dirPath);
 
-    items.forEach((item) => {
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i];
       const fullPath = path.join(dirPath, item);
       const relativePath = path.relative(args.baseDir, fullPath);
       const stat = fs.statSync(fullPath);
@@ -84,38 +98,43 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
         traverseDirectory(fullPath);
       } else if (stat.isFile()) {
         // full file contents
-        if (args.fullContentsRegexes) {
-          const fileRegexMatch = args.fullContentsRegexes.some((regex) =>
+        if (args.filenameRegexes) {
+          const fileRegexMatch = args.filenameRegexes.some((regex) =>
             new RegExp(regex).test(relativePath),
           );
           if (fileRegexMatch) {
             let contents = fs.readFileSync(fullPath, 'utf8');
-            if (fullContentsMaxFileSize && contents.length > fullContentsMaxFileSize) {
-              console.log(`Truncating file ${fullPath}: too large`);
-              contents = contents.substring(0, fullContentsMaxFileSize);
+            let truncated = false;
+            if (contents.length > maxFileSize) {
+              contents = contents.substring(0, maxFileSize);
+              truncated = true;
             }
-            outputFullContents += `File ${relativePath}: \`\`\`${contents}\`\`\`\n\n`;
-          }
-        }
+            const filePrompt = `File ${relativePath}: \`\`\`${contents}\`\`\`\n\n`;
 
-        // preview file contents
-        if (args.previewContentsRegexes) {
-          const fileRegexMatch = args.previewContentsRegexes.some((regex) =>
-            new RegExp(regex).test(relativePath),
-          );
-          if (fileRegexMatch) {
-            let contents = fs.readFileSync(fullPath, 'utf8');
-            if (previewContentsMaxFileSize && contents.length > previewContentsMaxFileSize) {
-              contents = contents.substring(0, previewContentsMaxFileSize);
+            // use this file if we are within the token limit
+            if (isWithinTokenLimit(fileContentsPrompt + filePrompt, maxTokens)) {
+              filesProcessed.push(relativePath);
+              fileContentsPrompt += filePrompt;
+              // eslint-disable-next-line max-depth
+              if (truncated) {
+                filesTruncated.push(relativePath);
+              }
+              // ignore this file if we reached the token limit
+            } else {
+              filesSkipped.push(relativePath);
             }
-            outputPreviewContents += `File ${relativePath}: \`\`\`${contents}\`\`\`\n\n`;
           }
         }
       }
-    });
+    }
   };
 
   traverseDirectory(args.baseDir);
 
-  return { fullFileContents: outputFullContents, previewFileContents: outputPreviewContents };
+  return {
+    fileContentsPrompt,
+    filesProcessed,
+    filesSkipped,
+    filesTruncated,
+  };
 };
