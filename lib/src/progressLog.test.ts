@@ -1,4 +1,4 @@
-import { debug, info, trace, ProgressLogFunc, ProgressLogLevel } from './progressLog';
+import { debug, info, trace, ProgressLogFunc } from './progressLog';
 
 describe('progressLog', () => {
   let logFunc: ProgressLogFunc;
