@@ -71,7 +71,7 @@ describe('createOpenAICompletionSession', () => {
 
     const session2 = createOpenAICompletionSession(openaiClient, {
       ...completionOptions,
-      maxConversationTokens: 20,
+      maxTokensTotal: 20,
     });
 
     (openaiClient.chat.completions.create as jest.Mock).mockResolvedValue({
@@ -87,8 +87,31 @@ describe('createOpenAICompletionSession', () => {
 
     await session2.sendPrompt(prompt);
     await expect(session2.sendPrompt(prompt)).rejects.toThrow(
-      'Total tokens in this session exceeded limit. ',
+      'Exceeded max total tokens sent/received',
     );
+  });
+
+  it('should fail if tokens for a single request gets too large', async () => {
+    const prompt = 'Hello, AI! Hello, AI! Hello, AI!';
+    const expectedCompletion = 'Hello, human!';
+
+    const session2 = createOpenAICompletionSession(openaiClient, {
+      ...completionOptions,
+      maxTokensPerRequest: 10,
+    });
+
+    (openaiClient.chat.completions.create as jest.Mock).mockResolvedValue({
+      id: 'test-id',
+      object: 'chat.completion',
+      created: 1234567890,
+      model: 'gpt-3.5-turbo',
+      usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
+      choices: [
+        { message: { role: 'assistant', content: expectedCompletion }, finish_reason: 'stop' },
+      ],
+    });
+
+    await expect(session2.sendPrompt(prompt)).rejects.toThrow('Exceeded max tokens per request');
   });
 
   it('should fail if sending too many prompts to this session', async () => {

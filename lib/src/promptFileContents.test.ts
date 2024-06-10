@@ -17,18 +17,23 @@ describe('describeWorkspace', () => {
 
     const output = promptFileContents({
       baseDir: tempDir,
-      fullContentsRegexes: ['\\.txt$', '\\.txt2$'],
+      filenameRegexes: ['\\.txt$', '\\.txt2$'],
     });
 
-    expect(output.fullFileContents).toMatch(
+    expect(output.fileContentsPrompt).toMatch(
       `File ${path.relative(tempDir, matchingFile)}: \`\`\`This is a test file\`\`\`\n\n`,
     );
-    expect(output.fullFileContents).toMatch(
+    expect(output.fileContentsPrompt).toMatch(
       `File ${path.relative(tempDir, matchingFile2)}: \`\`\`This is a test file2\`\`\`\n\n`,
     );
-    expect(output.fullFileContents).not.toMatch(
+    expect(output.fileContentsPrompt).not.toMatch(
       `File ${path.relative(tempDir, nonMatchingFile)}: \`\`\`This is another test file\`\`\`\n\n`,
     );
+
+    expect(output.filesProcessed.length).toBe(2);
+    expect(output.filesProcessed).toStrictEqual(['test.txt', 'test.txt2']);
+    expect(output.filesSkipped.length).toBe(0);
+    expect(output.filesTruncated.length).toBe(0);
 
     fs.unlinkSync(matchingFile);
     fs.unlinkSync(matchingFile2);
@@ -44,44 +49,41 @@ describe('describeWorkspace', () => {
 
     const output = promptFileContents({
       baseDir: tempDir,
-      fullContentsRegexes: ['\\.txt$'],
-      fullContentsMaxFileSize: 3000,
+      filenameRegexes: ['\\.txt$'],
+      maxFileSize: 3000,
     });
 
-    expect(output.fullFileContents).toMatch(
+    expect(output.fileContentsPrompt).toMatch(
       `File largeFile.txt: \`\`\`${'a'.repeat(3000)}\`\`\`\n\n`,
     );
+
+    expect(output.filesProcessed.length).toBe(1);
+    expect(output.filesSkipped.length).toBe(0);
+    expect(output.filesTruncated.length).toBe(1);
 
     fs.unlinkSync(largeFile);
     fs.rmdirSync(tempDir);
   });
 
-  it('should create full and preview contents', () => {
+  it('should skip files if we exceed max tokens', () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'test-'));
     const largeFile = path.join(tempDir, 'largeFile.txt');
-    const largeFile2 = path.join(tempDir, 'largeFile2.txt2');
+    const smallFile = path.join(tempDir, 'smallFile.txt');
 
-    fs.writeFileSync(largeFile, 'a'.repeat(5000));
-    fs.writeFileSync(largeFile2, 'b'.repeat(5000));
+    fs.writeFileSync(largeFile, 'a'.repeat(4000));
+    fs.writeFileSync(smallFile, 'a'.repeat(20000));
 
     const output = promptFileContents({
       baseDir: tempDir,
-      fullContentsRegexes: ['\\.txt$'],
-      fullContentsMaxFileSize: 3000,
-      previewContentsRegexes: ['\\.txt2$'],
-      previewContentsMaxFileSize: 300,
+      filenameRegexes: ['\\.txt$'],
+      maxTokens: 2000, // this will be enought for one file, but probably not for the other
     });
 
-    expect(output.fullFileContents).toMatch(
-      `File largeFile.txt: \`\`\`${'a'.repeat(3000)}\`\`\`\n\n`,
-    );
-
-    expect(output.previewFileContents).toMatch(
-      `File largeFile2.txt2: \`\`\`${'b'.repeat(300)}\`\`\`\n\n`,
-    );
+    expect(output.filesProcessed.length).toBe(1);
+    expect(output.filesSkipped.length).toBe(1);
 
     fs.unlinkSync(largeFile);
-    fs.unlinkSync(largeFile2);
+    fs.unlinkSync(smallFile);
     fs.rmdirSync(tempDir);
   });
 });

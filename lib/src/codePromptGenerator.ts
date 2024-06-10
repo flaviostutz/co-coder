@@ -1,4 +1,8 @@
-import { PromptFileContentsArgs, promptFileContents } from './promptFileContents';
+import {
+  PromptFileContentsArgs,
+  PromptFileContentsResponse,
+  promptFileContents,
+} from './promptFileContents';
 
 /**
  * Arguments for generating a code prompt
@@ -21,13 +25,22 @@ export type CodePromptGeneratorArgs = {
    * It will use these files to understand the structure of the project, technologies used and other informations that can help to generate the code.
    * @required
    */
-  workspaceFiles: PromptFileContentsArgs;
+  workspaceFiles: {
+    fullContents?: PromptFileContentsArgs;
+    previewContents?: PromptFileContentsArgs;
+  };
   /**
    * Example of the task to be performed. It will be added to the prompt as an example of the task that must be performed by the model.
    * You fully describe an example for the task, or indicate which files or folders can be used as an example and it will try to generate a code based on this example.
    * e.g.: "Use workspace files under folder `packages/reference-runner` as an example"
    */
   example: string;
+};
+
+export type CodePromptGeneratorResponse = {
+  codePrompt: string;
+  fullFileContents?: PromptFileContentsResponse;
+  previewFileContents?: PromptFileContentsResponse;
 };
 
 /**
@@ -37,14 +50,23 @@ export type CodePromptGeneratorArgs = {
  * @param args {CodePromptGeneratorArgs}
  * @returns {string} Model prompt tailored for generating code
  */
-export const codePromptGenerator = (args: CodePromptGeneratorArgs): string => {
-  const workspaceFilesContents = promptFileContents(args.workspaceFiles);
+export const codePromptGenerator = (args: CodePromptGeneratorArgs): CodePromptGeneratorResponse => {
+  // generate prompt contents for workspace files
+  let fullFileContents;
+  if (args.workspaceFiles.fullContents) {
+    fullFileContents = promptFileContents(args.workspaceFiles.fullContents);
+  }
+
+  let previewFileContents;
+  if (args.workspaceFiles.previewContents) {
+    previewFileContents = promptFileContents(args.workspaceFiles.previewContents);
+  }
 
   if (!args.taskDescription) {
     throw new Error('taskDescription should be non empty');
   }
 
-  return `
+  const codePrompt = `
   ## Instructions
 
   ### Task
@@ -111,11 +133,11 @@ ${checkValidString(args.projectInformation, 'No specific project information')}
 
 * This is the workspace where the developer works and where the source code of our system resides. All generated files should be located in this structure
 
-${checkValidString(workspaceFilesContents.fullFileContents, 'No files')}
+${checkValidString(fullFileContents?.fileContentsPrompt, 'No files')}
 
 #### File previews
 
-${checkValidString(workspaceFilesContents.previewFileContents, 'No files')}
+${checkValidString(previewFileContents?.fileContentsPrompt, 'No files')}
 
 ### Example
 
@@ -148,6 +170,12 @@ ${checkValidString(
 * Don't explain the reasoning, only generate code, ask for files or generate notes
 
 `;
+
+  return {
+    codePrompt,
+    fullFileContents,
+    previewFileContents,
+  };
 };
 
 // check if variable is non empty and a valid string

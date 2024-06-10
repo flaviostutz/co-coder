@@ -71,10 +71,16 @@ type Args = {
             default: '.out',
             demandOption: false,
           })
-          .option('max-tokens', {
-            describe: 'Max number of tokens to send to the API in a single request',
+          .option('max-tokens-total', {
+            describe: 'Max number of tokens allowed to be used in total for the task',
             type: 'string',
             default: '4000',
+            demandOption: false,
+          })
+          .option('max-tokens-per-request', {
+            describe: 'Max number of tokens to send to the API in a single request',
+            type: 'string',
+            default: '128000',
             demandOption: false,
           })
           .option('api-provider', {
@@ -186,17 +192,21 @@ type Args = {
             codePromptGeneratorArgs: {
               taskDescription: task,
               workspaceFiles: {
-                baseDir: defaultValue(argv.workspace, '.') as string,
-                fullContentsRegexes: files,
-                // eslint-disable-next-line no-undefined
-                previewContentsRegexes: defaultValue(argv.preview, undefined),
+                fullContents: {
+                  baseDir: defaultValue(argv.workspace, '.') as string,
+                  filenameRegexes: files,
+                },
               },
               example: argv.example,
               projectInformation: argv.info,
             },
             openAIClient,
             model,
-            maxTokens: parseInt(defaultValue(argv['max-tokens'], '4000') as string, 10),
+            maxTokensTotal: parseInt(defaultValue(argv['max-tokens-total'], '4000') as string, 10),
+            maxTokensPerRequest: parseInt(
+              defaultValue(argv['max-tokens-per-request'], '128000') as string,
+              10,
+            ),
             outputDir: path.join(process.cwd(), defaultValue(argv.output, '.out') as string),
           });
 
