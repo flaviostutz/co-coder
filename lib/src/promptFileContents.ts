@@ -103,6 +103,18 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
             new RegExp(regex).test(relativePath),
           );
           if (fileRegexMatch) {
+            // check if the file should be ignored
+            if (args.ignoreFilenameRegexes) {
+              const ignoreFileRegexMatch = args.ignoreFilenameRegexes.some((regex) =>
+                new RegExp(regex).test(relativePath),
+              );
+              // eslint-disable-next-line max-depth
+              if (ignoreFileRegexMatch) {
+                // eslint-disable-next-line no-continue
+                continue;
+              }
+            }
+
             let contents = fs.readFileSync(fullPath, 'utf8');
             let truncated = false;
             if (contents.length > maxFileSize) {
