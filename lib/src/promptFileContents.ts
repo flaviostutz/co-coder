@@ -3,58 +3,7 @@ import * as path from 'path';
 
 import { isWithinTokenLimit } from 'gpt-tokenizer';
 
-export type PromptFileContentsArgs = {
-  /**
-   * Base directory where the workspace files are located
-   * @required
-   */
-  baseDir: string;
-  /**
-   * Regexes to filter files and get contents.
-   * It will be used to get the contents of the files to be sent to the OpenAI API.
-   * @required
-   */
-  filenameRegexes: string[];
-  /**
-   * Regexes of filenames to ignore so it's contents won't be fetched
-   * even if the filename matches filenameRegexes
-   */
-  ignoreFilenameRegexes?: string[];
-  /**
-   * Maximum individual file size to be included in the prompt. Larger files will be truncated
-   * @default 20000
-   */
-  maxFileSize?: number;
-  /**
-   * Max number of tokens with the contents of the files.
-   * Stops processing files if the token limit is reached. This will simply ignore the rest of the files
-   * and return everything that was processed until that point.
-   * This is a safety measure to prevent sending too much data to the API
-   * @default 50000
-   */
-  maxTokens?: number;
-};
-
-export type PromptFileContentsResponse = {
-  /**
-   * Filename and contents of all files that matched the regexes in prompt format
-   */
-  fileContentsPrompt: string;
-  /**
-   * Total files that were added to the response as a prompt
-   * These include truncated and complete files
-   */
-  filesProcessed: string[];
-  /**
-   * Total files that were skipped because the total token limit was reached
-   */
-  filesSkipped: string[];
-  /**
-   * Total files that were truncated because they were too large (related to maxSize)
-   * These files were added to the response, but their contents were truncated
-   */
-  filesTruncated: string[];
-};
+import { PromptFileContentsArgs, PromptFileContentsResponse } from './types';
 
 /**
  * Given a base dir, describe the files and its contents
@@ -69,17 +18,11 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
     throw new Error(`Directory ${args.baseDir} does not exist`);
   }
 
-  let { maxFileSize } = args;
-  if (!maxFileSize) {
-    maxFileSize = 20000;
-  }
+  const maxFileSize = args.maxFileSize || 20000;
 
   let fileContentsPrompt = '';
 
-  let { maxTokens } = args;
-  if (!maxTokens) {
-    maxTokens = 50000;
-  }
+  const maxTokens = args.maxTokens || 50000;
 
   const filesProcessed: string[] = [];
   const filesSkipped: string[] = [];

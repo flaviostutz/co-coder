@@ -2,7 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-import { codePromptGenerator, CodePromptGeneratorArgs } from './codePromptGenerator';
+import { codePromptGenerator } from './codePromptGenerator';
+import { CodePromptGeneratorArgs } from './types';
 
 describe('codePromptGenerator', () => {
   it('should correctly generate a code prompt', () => {
