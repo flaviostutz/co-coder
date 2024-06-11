@@ -114,7 +114,7 @@ ${checkValidString(
     {
       "filename": "{filename relative to workspace path}",
       "contents": "{file contents}",
-      "relevance": "{score from 1 to 10 of the file relevance in the context of the task}"
+      "relevance": {numeric score from 1 to 10 of the file relevance in the context of the task}
     }
   ],
   "notes": ["{note1}", "{note2}"]

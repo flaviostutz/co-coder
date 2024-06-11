@@ -142,6 +142,7 @@ export type SendAndProcessPromptArgs = {
    * @default 'info'
    */
   progressLogLevel?: ProgressLogLevel;
+  requestedFilesLimits: FileContentsLimits;
 };
 
 /**
@@ -156,6 +157,7 @@ export type WorkspacePromptRunnerArgs = Pick<
   | 'maxTokensTotal'
   | 'progressLogFunc'
   | 'progressLogLevel'
+  | 'requestedFilesLimits'
 > & {
   /**
    * Arguments for generating the code prompt
@@ -163,18 +165,7 @@ export type WorkspacePromptRunnerArgs = Pick<
   codePromptGeneratorArgs: CodePromptGeneratorArgs;
 };
 
-export type PromptFileContentsArgs = {
-  /**
-   * Base directory where the workspace files are located
-   * @required
-   */
-  baseDir: string;
-  /**
-   * Regexes to filter files and get contents.
-   * It will be used to get the contents of the files to be sent to the OpenAI API.
-   * @required
-   */
-  filenameRegexes: string[];
+export type FileContentsLimits = {
   /**
    * Regexes of filenames to ignore so it's contents won't be fetched
    * even if the filename matches filenameRegexes
@@ -193,6 +184,20 @@ export type PromptFileContentsArgs = {
    * @default 50000
    */
   maxTokens?: number;
+};
+
+export type PromptFileContentsArgs = FileContentsLimits & {
+  /**
+   * Base directory where the workspace files are located
+   * @required
+   */
+  baseDir: string;
+  /**
+   * Regexes to filter files and get contents.
+   * It will be used to get the contents of the files to be sent to the OpenAI API.
+   * @required
+   */
+  filenameRegexes: string[];
 };
 
 export type PromptFileContentsResponse = {

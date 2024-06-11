@@ -73,6 +73,12 @@ export const workspacePromptRunner = async (
     maxTokensTotal: args.maxTokensTotal,
     progressLogFunc: args.progressLogFunc,
     progressLogLevel: args.progressLogLevel,
+    requestedFilesLimits: {
+      maxFileSize: args.codePromptGeneratorArgs.workspaceFiles.fullContents?.maxFileSize,
+      maxTokens: args.codePromptGeneratorArgs.workspaceFiles.fullContents?.maxTokens,
+      ignoreFilenameRegexes:
+        args.codePromptGeneratorArgs.workspaceFiles.fullContents?.ignoreFilenameRegexes,
+    },
   });
 };
 
@@ -210,6 +216,7 @@ ${output.response}`,
     const requestedFilesPrompt = promptFileContents({
       baseDir: args.requestedFilesDir,
       filenameRegexes: sendFilesRegexes,
+      ...args.requestedFilesLimits,
     });
 
     info(
@@ -244,8 +251,8 @@ ${output.response}`,
 
   info(`Workspace prompt completed`, args.progressLogFunc, args.progressLogLevel);
   debug(
-    `  ${stats.promptCounter} api invocations
-  ${stats.sessionInputTokens + stats.sessionInputTokens} total tokens (in: ${
+    ` ${stats.promptCounter} api invocations
+ ${stats.sessionInputTokens + stats.sessionInputTokens} tokens total (in: ${
       stats.sessionInputTokens
     }, out: ${stats.sessionOutputTokens})`,
     args.progressLogFunc,

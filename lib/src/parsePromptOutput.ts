@@ -16,5 +16,13 @@ const PromptOutputSchema = z.object({
 });
 
 export const parsePromptOutput = (output: string): z.infer<typeof PromptOutputSchema> => {
-  return PromptOutputSchema.parse(JSON.parse(output));
+  let out = output;
+  // remove ``` markers from the output
+  if (out.startsWith('```json')) {
+    out = output.slice(7);
+  }
+  if (out.endsWith('```')) {
+    out = out.slice(0, -3);
+  }
+  return PromptOutputSchema.parse(JSON.parse(out));
 };

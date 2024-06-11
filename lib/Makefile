@@ -15,12 +15,15 @@ build: install
 
 run-example-openai:
 	pnpm exec ts-node src/main.ts run \
-		--task "Discover any bug in this code, summarize them in 50 words and write it to summary.md" \
-		--files ^src/workspacePromptRunner\.ts$ \
-		--preview ^README.md$ \
-		--model gpt-3.5-turbo \
+		--task "Describe what the file workspacePromptRunner does and write the output to the file /summary.md" \
+		--files workspacePromptRunner.ts \
+		--preview README.md \
+		--files-ignore node_modules \
+		--model gpt-4o \
 		--output .out \
+		--max-tokens-total 30000 \
 		--api-key "$$(security find-generic-password -w -a flaviostutz -s flaviostutz-openai-apikey)"
+	@# --model gpt-3.5-turbo-0125 \
 
 lint:
 	pnpm exec eslint ./src --ext .ts

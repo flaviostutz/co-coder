@@ -41,7 +41,7 @@ export const run = async (processArgs: string[]): Promise<number> => {
             demandOption: false,
           })
           .option('files-ignore', {
-            alias: 'f',
+            alias: 'fi',
             describe: 'Regex for file names that will never be used. Defaults to "node_modules"',
             type: 'array',
             demandOption: false,
@@ -85,7 +85,7 @@ export const run = async (processArgs: string[]): Promise<number> => {
             alias: 'tt',
             describe: 'Max number of tokens allowed to be used in total for the task',
             type: 'string',
-            default: '4000',
+            default: '6000',
             demandOption: false,
           })
           .option('max-tokens-per-request', {
@@ -93,6 +93,20 @@ export const run = async (processArgs: string[]): Promise<number> => {
             describe: 'Max number of tokens to send to the API in a single request',
             type: 'string',
             default: '128000',
+            demandOption: false,
+          })
+          .option('max-tokens-files', {
+            alias: 'tf',
+            describe: 'Max number of tokens to spend with sending files',
+            type: 'string',
+            default: '5000',
+            demandOption: false,
+          })
+          .option('max-file-size', {
+            alias: 'fm',
+            describe: 'Max file size. Files larger than this will be truncated',
+            type: 'string',
+            default: '10000',
             demandOption: false,
           })
           .option('api-provider', {
@@ -156,11 +170,18 @@ const runWorkspacePrompt = async (argv: any): Promise<number> => {
   }
 
   const task = defaultValue(argv.task, null);
-  const filesIgnore = defaultValue(argv['files-ignore'], 'node_modules');
+
+  const filesIgnore = defaultValue(argv['files-ignore'], ['node_modules']);
   const fullFiles = defaultValue(argv.files, null);
   const previewFiles = defaultValue(argv.preview, null);
+
   const model = defaultValue(argv.model, null);
   const apiProvider = defaultValue(argv['api-provider'], 'openai');
+
+  const maxFileSize = defaultValue(argv['max-file-size'], 10000);
+  const maxTokensTotal = defaultValue(argv['max-tokens-total'], 6000);
+  const maxTokensFile = defaultValue(argv['max-tokens-file'], 5000);
+  const maxTokensPerRequest = defaultValue(argv['max-tokens-per-request'], 128000);
 
   if (!task) {
     console.log('"task" is required');
@@ -217,7 +238,7 @@ const runWorkspacePrompt = async (argv: any): Promise<number> => {
   }
 
   // run prompts
-  await workspacePromptRunner({
+  const result = await workspacePromptRunner({
     codePromptGeneratorArgs: {
       taskDescription: task,
       workspaceFiles: {
@@ -225,11 +246,15 @@ const runWorkspacePrompt = async (argv: any): Promise<number> => {
           baseDir: defaultValue(argv.workspace, '.') as string,
           filenameRegexes: fullFiles,
           ignoreFilenameRegexes: filesIgnore,
+          maxFileSize,
+          maxTokens: maxTokensFile,
         },
         previewContents: {
           baseDir: defaultValue(argv.workspace, '.') as string,
           filenameRegexes: previewFiles,
           ignoreFilenameRegexes: filesIgnore,
+          maxFileSize,
+          maxTokens: maxTokensFile,
         },
       },
       example: argv.example,
@@ -237,18 +262,33 @@ const runWorkspacePrompt = async (argv: any): Promise<number> => {
     },
     openAIClient,
     model,
-    maxTokensTotal: parseInt(defaultValue(argv['max-tokens-total'], '4000') as string, 10),
-    maxTokensPerRequest: parseInt(
-      defaultValue(argv['max-tokens-per-request'], '128000') as string,
-      10,
-    ),
+    maxTokensTotal,
+    maxTokensPerRequest,
+    requestedFilesLimits: {
+      maxFileSize,
+      maxTokens: maxTokensFile,
+      ignoreFilenameRegexes: filesIgnore,
+    },
     outputDir: path.join(process.cwd(), defaultValue(argv.output, '.out') as string),
     progressLogLevel: 'trace',
     progressLogFunc: console.log,
   });
 
   // show results
-  console.log('Task completed');
+  if (result.generatedFiles && result.generatedFiles.length === 0) {
+    console.log('No files generated');
+  } else {
+    console.log(`${result.generatedFiles.length} files generated`);
+  }
+
+  if (result.notes && result.notes.length > 0) {
+    console.log('Notes from model:');
+    for (let i = 0; i < result.notes.length; i += 1) {
+      const note = result.notes[i];
+      console.log(` - ${note}`);
+    }
+  }
+
   return 0;
 };
 

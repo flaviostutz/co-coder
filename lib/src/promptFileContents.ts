@@ -29,6 +29,7 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
   const filesTruncated: string[] = [];
 
   const traverseDirectory = (dirPath: string): void => {
+    if (dirPath.includes('node_modules')) return;
     const items = fs.readdirSync(dirPath);
 
     for (let i = 0; i < items.length; i += 1) {
@@ -48,9 +49,9 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
           if (fileRegexMatch) {
             // check if the file should be ignored
             if (args.ignoreFilenameRegexes) {
-              const ignoreFileRegexMatch = args.ignoreFilenameRegexes.some((regex) =>
-                new RegExp(regex).test(relativePath),
-              );
+              const ignoreFileRegexMatch = args.ignoreFilenameRegexes.some((regex) => {
+                return new RegExp(regex).test(relativePath);
+              });
               // eslint-disable-next-line max-depth
               if (ignoreFileRegexMatch) {
                 // eslint-disable-next-line no-continue
