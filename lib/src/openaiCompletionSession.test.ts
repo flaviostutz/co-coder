@@ -1,7 +1,8 @@
 /* eslint-disable camelcase */
 import { OpenAI } from 'openai';
 
-import { createOpenAICompletionSession, CompletionOptions } from './openaiCompletionSession';
+import { createOpenAICompletionSession } from './openaiCompletionSession';
+import { CompletionOptions } from './types';
 
 jest.mock('openai');
 

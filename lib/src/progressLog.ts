@@ -38,7 +38,7 @@ export const log = (
     if (logFuncLevel === 'off') {
       return;
     }
-    if (messageLogLevelNumber <= logFuncLevelNumber) {
+    if (messageLogLevelNumber <= logFuncLevelNumber && message) {
       logFunc(message);
     }
   }

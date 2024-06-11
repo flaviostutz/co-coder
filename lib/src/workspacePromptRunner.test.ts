@@ -28,17 +28,63 @@ describe('workspacePromptRunner', () => {
     }
   });
 
-  it('should run a prompt using workspacePromptRunner()', async () => {
+  it('should generate code and write to workspace dir', async () => {
     const prompt = 'This is a sample prompt.';
-    const expectedCompletion = JSON.stringify({
-      outcome: 'codes-generated',
-      files: [
+
+    // answer with generated code (file new-code.txt)
+    openAIClient.chat.completions.create.mockResolvedValueOnce({
+      id: 'test-id',
+      object: 'chat.completion',
+      created: 1234567890,
+      model: 'gpt-3.5-turbo',
+      usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
+      choices: [
         {
-          filename: 'new-code.txt',
-          contents: 'TEST CODE',
+          message: {
+            role: 'assistant',
+            content: JSON.stringify({
+              outcome: 'codes-generated',
+              files: [
+                {
+                  filename: 'new-code.txt',
+                  contents: 'THIS IS A NEW CODE!!',
+                },
+              ],
+            }),
+          },
+          finish_reason: 'stop',
         },
       ],
     });
+
+    const result = await workspacePromptRunner({
+      codePromptGeneratorArgs: {
+        taskDescription: prompt,
+        workspaceFiles: {
+          fullContents: {
+            baseDir: tempDir,
+            filenameRegexes: ['file1\\.txt', 'file2\\.txt'],
+          },
+        },
+        example: 'Use all files in the workspace as an example.',
+      },
+      openAIClient,
+      model: 'gpt-3.5-turbo',
+      outputDir: tempDir,
+    });
+
+    // check if tempDir is 6, meaning one new file was generated
+    const files = fs.readdirSync(tempDir);
+    expect(files).toHaveLength(6);
+
+    const newCodeContents = fs.readFileSync(path.join(tempDir, 'new-code.txt'), 'utf-8');
+    expect(newCodeContents).toBe('THIS IS A NEW CODE!!');
+
+    expect(result.generatedFiles[0]).toBe(path.join(tempDir, 'new-code.txt'));
+  });
+
+  it('should run a prompt using workspacePromptRunner()', async () => {
+    const prompt = 'This is a sample prompt.';
 
     openAIClient.chat.completions.create.mockResolvedValue({
       id: 'test-id',
@@ -47,7 +93,21 @@ describe('workspacePromptRunner', () => {
       model: 'gpt-3.5-turbo',
       usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
       choices: [
-        { message: { role: 'assistant', content: expectedCompletion }, finish_reason: 'stop' },
+        {
+          message: {
+            role: 'assistant',
+            content: JSON.stringify({
+              outcome: 'codes-generated',
+              files: [
+                {
+                  filename: 'new-code.txt',
+                  contents: 'TEST CODE',
+                },
+              ],
+            }),
+          },
+          finish_reason: 'stop',
+        },
       ],
     });
 
@@ -118,6 +178,34 @@ describe('workspacePromptRunner', () => {
                   contents: 'THIS IS A NEW CODE!!',
                 },
               ],
+              hasMoreToGenerate: true, // indicates that some files weren't generated in this response
+              notes: ['This is a note.'],
+            }),
+          },
+          finish_reason: 'stop',
+        },
+      ],
+    });
+
+    // third answer will generate more code that wasn't created in the previous call
+    openAIClient.chat.completions.create.mockResolvedValueOnce({
+      id: 'test-id',
+      object: 'chat.completion',
+      created: 1234567890,
+      model: 'gpt-3.5-turbo',
+      usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
+      choices: [
+        {
+          message: {
+            role: 'assistant',
+            content: JSON.stringify({
+              outcome: 'codes-generated',
+              files: [
+                {
+                  filename: 'new-code-hasmore.txt',
+                  contents: 'THIS IS A NEW CODE HAS MORE!!',
+                },
+              ],
             }),
           },
           finish_reason: 'stop',
@@ -141,69 +229,19 @@ describe('workspacePromptRunner', () => {
         example: 'Use all files in the workspace as an example.',
       },
       openAIClient,
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-3.5-turbo-0125',
       outputDir: tempDir,
+      progressLogLevel: 'trace',
+      progressLogFunc: jest.fn(),
     });
 
-    expect(openAIClient.chat.completions.create).toHaveBeenCalledTimes(2);
+    expect(result.stats.promptCounter).toBe(3);
+    expect(openAIClient.chat.completions.create).toHaveBeenCalledTimes(3);
 
     expect(result).toBeDefined();
+    expect(result.generatedFiles).toHaveLength(2);
   });
 
-  it('should generate code and write to workspace dir', async () => {
-    const prompt = 'This is a sample prompt.';
-
-    // answer with generated code (file new-code.txt)
-    openAIClient.chat.completions.create.mockResolvedValueOnce({
-      id: 'test-id',
-      object: 'chat.completion',
-      created: 1234567890,
-      model: 'gpt-3.5-turbo',
-      usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
-      choices: [
-        {
-          message: {
-            role: 'assistant',
-            content: JSON.stringify({
-              outcome: 'codes-generated',
-              files: [
-                {
-                  filename: 'new-code.txt',
-                  contents: 'THIS IS A NEW CODE!!',
-                },
-              ],
-            }),
-          },
-          finish_reason: 'stop',
-        },
-      ],
-    });
-
-    const result = await workspacePromptRunner({
-      codePromptGeneratorArgs: {
-        taskDescription: prompt,
-        workspaceFiles: {
-          fullContents: {
-            baseDir: tempDir,
-            filenameRegexes: ['file1\\.txt', 'file2\\.txt'],
-          },
-        },
-        example: 'Use all files in the workspace as an example.',
-      },
-      openAIClient,
-      model: 'gpt-3.5-turbo',
-      outputDir: tempDir,
-    });
-
-    // check if tempDir is 6, meaning one new file was generated
-    const files = fs.readdirSync(tempDir);
-    expect(files).toHaveLength(6);
-
-    const newCodeContents = fs.readFileSync(path.join(tempDir, 'new-code.txt'), 'utf-8');
-    expect(newCodeContents).toBe('THIS IS A NEW CODE!!');
-
-    expect(result.generatedFiles[0]).toBe(path.join(tempDir, 'new-code.txt'));
-  });
   afterEach(() => {
     // clean up the temporary directory
     fs.rmSync(tempDir, { recursive: true });

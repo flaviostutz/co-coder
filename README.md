@@ -14,31 +14,60 @@ The difference to Github Co-Pilot is that you can use more advanced OpenAI model
 
 ## CLI tool
 
-To use the CLI tool, you can use the run command followed by various options:
-
 ```
 npx co-coder run --task <task description> --workspace <workspace dir> [options]
 ```
 
-### Options
+```
+co-coder run
 
---task: This is the task to be performed in the context of the workspace files. This option is required.
+Run a task in the context of workspace files and possibly generate new files
+based on the prompt
 
---workspace: This is the base directory with workspace files.
-
---files: This is an array of file paths relative to the workspace directory. These files will be included in the prompt sent to the model.
-
---preview: This is an array of file paths relative to the workspace directory. These files will be included in the prompt sent to the model, but their contents will not be editable.
-
---model: This is the OpenAI model to use for the task. The default model is text-davinci-002.
-
---max-tokens-total: This is the maximum total number of tokens that can be used by the tool. The default value is 4096.
-
---max-tokens-per-request: This is the maximum number of tokens that can be used in a single request. The default value is 4096.
-
---api-provider: This is the API provider to use. The default provider is openai.
-
---api-url: This is the URL of the API endpoint to use. The default URL is https://api.openai.com.
+Options:
+  --version        Show version number     [boolean]
+  --help           Show help      [boolean]
+ -t, --task        Task to be performed in the context of the
+                   workspace files  [string] [required]
+ -w, --workspace   Base directory with workspace files
+                   [string] [default: "."]
+ -f, --files       Regex for file names that will have its
+                   full content included in the prompt. e.g.
+                   "src/.*\.ts"   [array] [required]
+ -p, --preview     Regex for file names that will have its
+                   partial content included in the prompt
+                   [array]
+ -e, --example     Instruction with an example of the task to
+                   be performed, or a path to a file that
+                   should be used as an example   [string]
+ -i, --info        General information about the workspace
+                   structure, standards, and other relevant
+                   information to be included in the prompt
+                   [string]
+ -m, --model       Model to be used. e.g. "gpt-4o",
+                   "gpt-3.5-turbo-0125". If using Azure, must
+                   match the custom deployment name you chose
+                   for your model   [string] [required]
+ -o, --output      Output directory for generated files by
+                   the prompt   [string] [default: ".out"]
+  --max-tokens-total, --tt  Max number of tokens allowed to be used in
+                            total for the task
+                            [string] [default: "4000"]
+  --max-tokens-per-request, --tr  Max number of tokens to send to the API in
+                                  a single request
+                                  [string] [default: "128000"]
+  --api-provider   API provider. One of "openai" or "azure"
+                   [string] [default: "openai"]
+  --api-url        API url. e.g. "https://localhost:1234". If
+                   using Azure, it's required to use the
+                   endpoint URL from Azure     [string]
+  --api-auth       API auth method. One of "token" or
+          "apikey" [string] [default: "apikey"]
+  --api-key        OpenAI API key     [string]
+  --api-azure-version    Azure API version. Required when using
+                         Azure provider
+                         [string] [default: "2024-02-01"]
+```
 
 ### Examples
 
