@@ -73,6 +73,7 @@ export const workspacePromptRunner = async (
     model: args.model,
     maxTokensPerRequest: args.maxTokensPerRequest,
     maxTokensTotal: args.maxTokensTotal,
+    maxPrompts: args.maxPrompts,
     progressLogFunc: args.progressLogFunc,
     progressLogLevel: args.progressLogLevel,
     requestedFilesLimits: {
