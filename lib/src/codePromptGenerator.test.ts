@@ -17,7 +17,7 @@ describe('codePromptGenerator', () => {
       workspaceFiles: {
         fullContents: {
           baseDir: tempDir,
-          filenameRegexes: ['\\.txt$'],
+          filePatterns: ['*.txt'],
         },
       },
       example: 'Test example',

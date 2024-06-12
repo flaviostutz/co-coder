@@ -17,7 +17,7 @@ describe('describeWorkspace', () => {
 
     const output = promptFileContents({
       baseDir: tempDir,
-      filenameRegexes: ['\\.txt$', '\\.txt2$'],
+      filePatterns: ['*.txt', '*.txt2'],
     });
 
     expect(output.fileContentsPrompt).toMatch(
@@ -49,7 +49,7 @@ describe('describeWorkspace', () => {
 
     const output = promptFileContents({
       baseDir: tempDir,
-      filenameRegexes: ['\\.txt$'],
+      filePatterns: ['*.txt'],
       maxFileSize: 3000,
     });
 
@@ -75,7 +75,7 @@ describe('describeWorkspace', () => {
 
     const output = promptFileContents({
       baseDir: tempDir,
-      filenameRegexes: ['\\.txt$'],
+      filePatterns: ['*.txt'],
       maxTokens: 2000, // this will be enought for one file, but probably not for the other
     });
 

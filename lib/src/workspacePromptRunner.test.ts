@@ -63,7 +63,7 @@ describe('workspacePromptRunner', () => {
         workspaceFiles: {
           fullContents: {
             baseDir: tempDir,
-            filenameRegexes: ['file1\\.txt', 'file2\\.txt'],
+            filePatterns: ['file1.txt', 'file2.txt'],
           },
         },
         example: 'Use all files in the workspace as an example.',
@@ -71,6 +71,11 @@ describe('workspacePromptRunner', () => {
       openAIClient,
       model: 'gpt-3.5-turbo',
       outputDir: tempDir,
+      requestedFilesLimits: {
+        maxFileSize: 10000,
+        maxTokens: 5000,
+        ignoreFilePatterns: [],
+      },
     });
 
     // check if tempDir is 6, meaning one new file was generated
@@ -117,7 +122,7 @@ describe('workspacePromptRunner', () => {
         workspaceFiles: {
           fullContents: {
             baseDir: tempDir,
-            filenameRegexes: ['.*\\.txt'],
+            filePatterns: ['*.txt'],
           },
         },
         example: 'Use all files in the workspace as an example.',
@@ -126,6 +131,11 @@ describe('workspacePromptRunner', () => {
       openAIClient,
       model: 'gpt-3.5-turbo',
       outputDir: tempDir,
+      requestedFilesLimits: {
+        maxFileSize: 10000,
+        maxTokens: 5000,
+        ignoreFilePatterns: [],
+      },
     });
 
     // check if tempDir is 6, meaning one new files was generated
@@ -219,11 +229,11 @@ describe('workspacePromptRunner', () => {
         workspaceFiles: {
           fullContents: {
             baseDir: tempDir,
-            filenameRegexes: ['file1\\.txt', 'file2\\.txt'],
+            filePatterns: ['file1.txt', 'file2.txt'],
           },
           previewContents: {
             baseDir: tempDir,
-            filenameRegexes: ['file3\\.txt'],
+            filePatterns: ['file3.txt'],
           },
         },
         example: 'Use all files in the workspace as an example.',
@@ -233,6 +243,11 @@ describe('workspacePromptRunner', () => {
       outputDir: tempDir,
       progressLogLevel: 'trace',
       progressLogFunc: jest.fn(),
+      requestedFilesLimits: {
+        maxFileSize: 10000,
+        maxTokens: 5000,
+        ignoreFilePatterns: [],
+      },
     });
 
     expect(result.stats.promptCounter).toBe(3);

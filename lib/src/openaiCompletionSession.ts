@@ -64,7 +64,9 @@ export const createOpenAICompletionSession = (
 
       // process response
       if (response.choices[0].finish_reason !== 'stop') {
-        throw new Error(`Response 'finish_reason' is not 'stop'`);
+        throw new Error(
+          `Response 'finish_reason' is ${response.choices[0].finish_reason} (should be 'stop')`,
+        );
       }
       const completion = response.choices[0].message.content;
 

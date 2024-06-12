@@ -117,14 +117,19 @@ export type SendAndProcessPromptArgs = {
   model: openai.ChatModel;
   /**
    * Maximum number of tokens allowed to be sent to the API in a single request
-   * Defaults to 4000
+   * @default 4000
    */
   maxTokensPerRequest?: number;
   /**
    * Maximum number of tokens allowed to be sent to the API in total, counting different requests
-   * Defaults to 12000
+   * @default 12000
    */
   maxTokensTotal?: number;
+  /**
+   * Maximum number of prompts allowed to be sent to the model in this session
+   * @default 5
+   */
+  maxPrompts?: number;
   /**
    * OpenAI completion session to be used for generating code
    * Used to track the conversation state.
@@ -158,6 +163,7 @@ export type WorkspacePromptRunnerArgs = Pick<
   | 'progressLogFunc'
   | 'progressLogLevel'
   | 'requestedFilesLimits'
+  | 'maxPrompts'
 > & {
   /**
    * Arguments for generating the code prompt
@@ -167,10 +173,15 @@ export type WorkspacePromptRunnerArgs = Pick<
 
 export type FileContentsLimits = {
   /**
-   * Regexes of filenames to ignore so it's contents won't be fetched
-   * even if the filename matches filenameRegexes
+   * Whether to use the .gitignore file to ignore files
+   * @default true
    */
-  ignoreFilenameRegexes?: string[];
+  useGitIgnore?: boolean;
+  /**
+   * Blob patterns of filenames to ignore so it's contents won't be fetched
+   * even if the filename matches the patterns in filePatterns
+   */
+  ignoreFilePatterns?: string[];
   /**
    * Maximum individual file size to be included in the prompt. Larger files will be truncated
    * @default 20000
@@ -184,6 +195,12 @@ export type FileContentsLimits = {
    * @default 50000
    */
   maxTokens?: number;
+  /**
+   * Max number of requests for additional files that can be made by the model
+   * If this limit is reached, we will ask the model to proceed without the additional files
+   * @default 2
+   */
+  maxFileRequests?: number;
 };
 
 export type PromptFileContentsArgs = FileContentsLimits & {
@@ -193,16 +210,16 @@ export type PromptFileContentsArgs = FileContentsLimits & {
    */
   baseDir: string;
   /**
-   * Regexes to filter files and get contents.
+   * Blob patterns to filter files and get contents.
    * It will be used to get the contents of the files to be sent to the OpenAI API.
    * @required
    */
-  filenameRegexes: string[];
+  filePatterns: string[];
 };
 
 export type PromptFileContentsResponse = {
   /**
-   * Filename and contents of all files that matched the regexes in prompt format
+   * Filename and contents of all files that matched the blob pattern in prompt format
    */
   fileContentsPrompt: string;
   /**
@@ -251,7 +268,7 @@ export type CodePromptGeneratorArgs = {
    * You fully describe an example for the task, or indicate which files or folders can be used as an example and it will try to generate a code based on this example.
    * e.g.: "Use workspace files under folder `packages/reference-runner` as an example"
    */
-  example: string;
+  example?: string;
 };
 
 export type CodePromptGeneratorResponse = {

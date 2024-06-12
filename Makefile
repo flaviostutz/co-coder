@@ -14,3 +14,5 @@ SHELL := /bin/bash
 
 publish:
 	cd lib; make publish
+
+
