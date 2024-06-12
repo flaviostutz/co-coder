@@ -76,8 +76,8 @@ export const workspacePromptRunner = async (
     requestedFilesLimits: {
       maxFileSize: args.codePromptGeneratorArgs.workspaceFiles.fullContents?.maxFileSize,
       maxTokens: args.codePromptGeneratorArgs.workspaceFiles.fullContents?.maxTokens,
-      ignoreFilenameRegexes:
-        args.codePromptGeneratorArgs.workspaceFiles.fullContents?.ignoreFilenameRegexes,
+      ignoreFilePatterns:
+        args.codePromptGeneratorArgs.workspaceFiles.fullContents?.ignoreFilePatterns,
     },
   });
 };
@@ -122,7 +122,7 @@ const sendAndProcessWorkspacePrompt = async (
     });
   }
 
-  debug('Sending prompt to model...', args.progressLogFunc, args.progressLogLevel);
+  info('Sending prompt to model...', args.progressLogFunc, args.progressLogLevel);
   trace(
     `Prompt: 
 ${args.prompt}`,
@@ -209,13 +209,13 @@ ${output.response}`,
       args.progressLogLevel,
     );
 
-    const sendFilesRegexes = promptOutput.files
+    const filePatterns = promptOutput.files
       .filter((file) => file.relevance && file.relevance >= 0.5)
       .map((file) => file.filename);
 
     const requestedFilesPrompt = promptFileContents({
       baseDir: args.requestedFilesDir,
-      filenameRegexes: sendFilesRegexes,
+      filePatterns,
       ...args.requestedFilesLimits,
     });
 
