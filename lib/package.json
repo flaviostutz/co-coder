@@ -48,6 +48,7 @@
   "dependencies": {
     "@azure/identity": "^4.2.0",
     "esbuild": "^0.19.11",
+    "fast-glob": "^3.3.2",
     "gpt-tokenizer": "^2.1.2",
     "openai": "^4.49.0",
     "openapi3-ts": "^4.3.2",

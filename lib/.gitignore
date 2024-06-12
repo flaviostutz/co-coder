@@ -1,0 +1,5 @@
+# this file is duplicated here for testing purposes of the gitignore feature in the lib (see Makefile example target)
+node_modules
+dist
+.out
+.tmp

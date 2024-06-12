@@ -1,13 +1,16 @@
 #!/usr/bin/env node
+/* eslint-disable no-undefined */
 /* eslint-disable no-console */
 
 import path from 'path';
 
 import yargs from 'yargs';
-import { OpenAI, AzureOpenAI } from 'openai';
+import openai, { OpenAI, AzureOpenAI } from 'openai';
 import { DefaultAzureCredential, getBearerTokenProvider } from '@azure/identity';
 
 import { workspacePromptRunner } from './workspacePromptRunner';
+import { WorkspacePromptRunnerArgs } from './types';
+import { ProgressLogLevel } from './progressLog';
 
 // Define the command line arguments
 // eslint-disable-next-line no-unused-expressions, @typescript-eslint/no-unused-expressions, @typescript-eslint/no-floating-promises
@@ -36,21 +39,35 @@ export const run = async (processArgs: string[]): Promise<number> => {
           .option('files', {
             alias: 'f',
             describe:
-              'Regex for file names that will have its full content included in the prompt. e.g. "src/.*\\.ts"',
+              'Blob patterns for file names that will have its full content included in the prompt. e.g. "src/**/*.ts"',
             type: 'array',
             demandOption: false,
           })
           .option('files-ignore', {
             alias: 'fi',
-            describe: 'Regex for file names that will never be used. Defaults to "node_modules"',
+            describe: 'Blob patterns for file names that will never be used',
+            type: 'array',
+            demandOption: false,
+          })
+          .option('use-gitignore', {
+            alias: 'gi',
+            describe: 'Ignore files that are in .gitignore',
             type: 'array',
             demandOption: false,
           })
           .option('preview', {
             alias: 'p',
             describe:
-              'Regex for file names that will have its partial content included in the prompt',
+              'Blob patterns for file names that will have its partial content included in the prompt. e.g. "docs/**/*.md"',
             type: 'array',
+            demandOption: false,
+          })
+          .option('preview-size', {
+            alias: 'ps',
+            describe:
+              'Max size of contents for the preview files. If "0", only the file name will be included in the prompt',
+            type: 'array',
+            default: 300,
             demandOption: false,
           })
           .option('example', {
@@ -103,10 +120,24 @@ export const run = async (processArgs: string[]): Promise<number> => {
             demandOption: false,
           })
           .option('max-file-size', {
-            alias: 'fm',
+            alias: 'fs',
             describe: 'Max file size. Files larger than this will be truncated',
             type: 'string',
             default: '10000',
+            demandOption: false,
+          })
+          .option('max-file-requests', {
+            alias: 'fr',
+            describe: 'Max number of times the model can request for additional files',
+            type: 'number',
+            default: 2,
+            demandOption: false,
+          })
+          .option('max-prompts', {
+            alias: 'pm',
+            describe: 'Max number of prompt requests allowed to be sent to the model for the task',
+            type: 'number',
+            default: 20,
             demandOption: false,
           })
           .option('api-provider', {
@@ -137,77 +168,115 @@ export const run = async (processArgs: string[]): Promise<number> => {
             type: 'string',
             default: '2024-02-01',
             demandOption: false,
+          })
+          .option('log', {
+            describe: 'Log level. One of "trace", "debug", "info", "off"',
+            type: 'string',
+            default: 'info',
+            demandOption: false,
           });
       },
     )
     .help()
     .example(
-      'co-coder run --task "fix any bugs in these files" --files "src/.*\\.ts" --model "gpt-3.5-turbo-0125"',
+      'co-coder run --task "fix any bugs in these files" --files "src/*.ts" --model "gpt-3.5-turbo-0125"',
       'Fix bugs in all typescript codes in the "src" directory',
     );
 
-  // execute commands
+  // parse arguments
   const args2 = yargs2.parseSync();
   const action = <string>args2._[0];
   if (action !== 'run') {
     console.log(`${await yargs2.getHelp()}`);
     return 1;
   }
-  return runWorkspacePrompt(args2);
-};
 
-const runWorkspacePrompt = async (argv: any): Promise<number> => {
-  // openai client configuration
-  let openAIClient;
+  // prepare parameters
+  let params;
+  try {
+    params = validateAndExpandDefaults(args2);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    console.log(err.message);
+    return 1;
+  }
 
-  const apiKey = argv['api-key'];
-  const apiAuth = defaultValue(argv['api-auth'], 'apikey');
-  if (apiAuth === 'apikey') {
-    if (!apiKey) {
-      console.log('"api-key" is required when auth is "apikey"');
-      return 1;
+  // run prompts
+  const result = await workspacePromptRunner(params);
+
+  // show results
+  if (result.generatedFiles && result.generatedFiles.length === 0) {
+    console.log('No files generated');
+  } else {
+    console.log(`${result.generatedFiles.length} files generated`);
+  }
+  if (result.notes && result.notes.length > 0) {
+    console.log('Notes from model:');
+    for (let i = 0; i < result.notes.length; i += 1) {
+      const note = result.notes[i];
+      console.log(` - ${note}`);
     }
   }
 
-  const task = defaultValue(argv.task, null);
+  return 0;
+};
 
-  const filesIgnore = defaultValue(argv['files-ignore'], ['node_modules']);
-  const fullFiles = defaultValue(argv.files, null);
-  const previewFiles = defaultValue(argv.preview, null);
+function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePromptRunnerArgs {
+  const baseDir = defaultValue(argv.workspace, '.') as string;
+  const filesIgnore = defaultValue(argv['files-ignore'], undefined) as string[] | undefined;
+  const fullFiles = defaultValue(argv.files, undefined) as string[] | undefined;
+  const previewFiles = defaultValue(argv.preview, undefined) as string[] | undefined;
+  const previewSize = defaultIntValue(argv['preview-size'], 300) as number;
+  const useGitIgnore = defaultValue(argv['use-gitignore'], true) as boolean;
 
-  const model = defaultValue(argv.model, null);
-  const apiProvider = defaultValue(argv['api-provider'], 'openai');
+  const task = defaultValue(argv.task, undefined) as string | undefined;
+  const projectInformation = defaultValue(argv.info, undefined) as string | undefined;
+  const example = defaultValue(argv.example, undefined) as string | undefined;
 
-  const maxFileSize = defaultValue(argv['max-file-size'], 10000);
-  const maxTokensTotal = defaultValue(argv['max-tokens-total'], 6000);
-  const maxTokensFile = defaultValue(argv['max-tokens-file'], 5000);
-  const maxTokensPerRequest = defaultValue(argv['max-tokens-per-request'], 128000);
+  const model = argv.model as openai.ChatModel;
+  const apiProvider = defaultValue(argv['api-provider'], 'openai') as string;
+  const apiURL = argv['api-url'] as string | undefined;
+  const apiVersion = defaultValue(argv['api-azure-version'], '2024-02-01') as string;
+  const apiKey = argv['api-key'] as string | undefined;
+  const apiAuth = defaultValue(argv['api-auth'], 'apikey');
+
+  const maxPrompts = defaultIntValue(argv['max-prompts'], 20) as number;
+  const maxFileRequests = defaultValue(argv['max-file-requests'], 2) as number;
+  const maxFileSize = defaultIntValue(argv['max-file-size'], 10000) as number;
+  const maxTokensTotal = defaultIntValue(argv['max-tokens-total'], 6000) as number;
+  const maxTokensFile = defaultIntValue(argv['max-tokens-file'], 5000) as number;
+  const maxTokensPerRequest = defaultIntValue(argv['max-tokens-per-request'], 128000) as number;
+  const outputDir = defaultValue(argv.output, '.out') as string;
+  const progressLogLevel = defaultValue(argv.log, 'info') as ProgressLogLevel;
 
   if (!task) {
-    console.log('"task" is required');
-    return 1;
+    throw new Error('"task" is required');
   }
   if (!fullFiles) {
-    console.log('"files" is required');
-    return 1;
+    throw new Error('"files" is required');
   }
   if (!model) {
-    console.log('"model" is required');
-    return 1;
+    throw new Error('"model" is required');
   }
   if (!apiProvider) {
-    console.log('"api-provider" is required');
-    return 1;
+    throw new Error('"api-provider" is required');
+  }
+  if (apiAuth === 'apikey') {
+    if (!apiKey) {
+      throw new Error('"api-key" is required when auth is "apikey"');
+    }
   }
 
+  // openai client
+  let openAIClient;
+
   // Azure provider
-  if (argv['api-provider'] === 'azure') {
+  if (apiProvider === 'azure') {
     let azureADTokenProvider;
 
-    const endpoint = argv['api-url'];
+    const endpoint = argv['api-url'] as string;
     if (!endpoint) {
-      console.log('"api-url" is required when provider is "azure"');
-      return 1;
+      throw new Error('"api-url" is required when provider is "azure"');
     }
 
     if (apiAuth === 'token') {
@@ -220,80 +289,81 @@ const runWorkspacePrompt = async (argv: any): Promise<number> => {
     openAIClient = new AzureOpenAI({
       deployment: model,
       endpoint,
-      apiVersion: defaultValue(argv['api-azure-version'], '2024-02-01'),
+      apiVersion,
       apiKey,
       azureADTokenProvider,
     });
 
     // OpenAI provider
-  } else {
+  } else if (apiProvider === 'openai') {
     if (!apiKey) {
-      console.log('"api.apikey" is required when provider is "openai"');
-      return 1;
+      throw new Error('"api.apikey" is required when provider is "openai"');
     }
     openAIClient = new OpenAI({
-      baseURL: argv['api-url'],
+      baseURL: apiURL,
       apiKey,
     });
+  } else {
+    throw new Error(`Invalid API provider: ${apiProvider}`);
   }
 
-  // run prompts
-  const result = await workspacePromptRunner({
+  let previewContents;
+  if (previewFiles) {
+    previewContents = {
+      baseDir,
+      filePatterns: previewFiles,
+      useGitIgnore,
+      ignoreFilePatterns: filesIgnore,
+      maxFileSize: previewSize,
+      maxTokens: maxTokensFile,
+    };
+  }
+
+  const args: WorkspacePromptRunnerArgs = {
     codePromptGeneratorArgs: {
       taskDescription: task,
       workspaceFiles: {
         fullContents: {
-          baseDir: defaultValue(argv.workspace, '.') as string,
-          filenameRegexes: fullFiles,
-          ignoreFilenameRegexes: filesIgnore,
+          baseDir,
+          filePatterns: fullFiles,
+          useGitIgnore,
+          ignoreFilePatterns: filesIgnore,
           maxFileSize,
           maxTokens: maxTokensFile,
         },
-        previewContents: {
-          baseDir: defaultValue(argv.workspace, '.') as string,
-          filenameRegexes: previewFiles,
-          ignoreFilenameRegexes: filesIgnore,
-          maxFileSize,
-          maxTokens: maxTokensFile,
-        },
+        previewContents,
       },
-      example: argv.example,
-      projectInformation: argv.info,
+      example,
+      projectInformation,
     },
     openAIClient,
     model,
     maxTokensTotal,
     maxTokensPerRequest,
+    maxPrompts,
     requestedFilesLimits: {
       maxFileSize,
       maxTokens: maxTokensFile,
-      ignoreFilenameRegexes: filesIgnore,
+      useGitIgnore,
+      ignoreFilePatterns: filesIgnore,
+      maxFileRequests,
     },
-    outputDir: path.join(process.cwd(), defaultValue(argv.output, '.out') as string),
-    progressLogLevel: 'trace',
+    outputDir: path.join(process.cwd(), outputDir),
+    progressLogLevel,
     progressLogFunc: console.log,
-  });
+  };
 
-  // show results
-  if (result.generatedFiles && result.generatedFiles.length === 0) {
-    console.log('No files generated');
-  } else {
-    console.log(`${result.generatedFiles.length} files generated`);
-  }
-
-  if (result.notes && result.notes.length > 0) {
-    console.log('Notes from model:');
-    for (let i = 0; i < result.notes.length; i += 1) {
-      const note = result.notes[i];
-      console.log(` - ${note}`);
-    }
-  }
-
-  return 0;
-};
+  return args;
+}
 
 function defaultValue<T>(arg: T | undefined, defaultV: T | undefined): T | undefined {
   // eslint-disable-next-line no-undefined
   const v = arg !== undefined && arg !== null ? arg : defaultV;
+  return v;
+}
+
+function defaultIntValue(arg: any | undefined, defaultV: number | undefined): number | undefined {
+  // eslint-disable-next-line no-undefined
+  const v = arg !== undefined && arg !== null ? parseInt(arg, 10) : defaultV;
   return v;
 }

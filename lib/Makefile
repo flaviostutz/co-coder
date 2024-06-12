@@ -14,15 +14,35 @@ build: install
 	pnpm pack --pack-destination dist
 
 run-example-openai:
+	rm -rf .out
 	pnpm exec ts-node src/main.ts run \
-		--task "Describe what the file workspacePromptRunner does and write the output to the file /summary.md" \
-		--files workspacePromptRunner.ts \
-		--preview README.md \
-		--files-ignore node_modules \
+		--task "Convert main.ts to Golang" \
+		--files **/main.ts \
 		--model gpt-4o \
 		--output .out \
-		--max-tokens-total 30000 \
+		--max-tokens-total 50000 \
+		--max-file-requests 5 \
+		--log debug \
 		--api-key "$$(security find-generic-password -w -a flaviostutz -s flaviostutz-openai-apikey)"
+
+	@# --task "Write a documentation for the cli with a summary, api and examples of usage" \
+
+run-example-azure:
+	rm -rf .out
+	pnpm exec ts-node src/main.ts run \
+		--task "Convert main.ts to Golang" \
+		--files **/main.ts \
+		--preview README.md \
+		--model gpt-4-turbo \
+		--output .out \
+		--max-tokens-total 40000 \
+		--max-file-requests 5 \
+		--log debug \
+		--api-provider azure \
+		--api-url https://sc01openaiservices03.openai.azure.com/ \
+		--api-key "$$(security find-generic-password -w -a flaviostutz -s nn-azure-openai-sc01openaiservices03)"
+
+	@# --task "Describe what the file workspacePromptRunner does and write the output to the file /summary.md"
 	@# --model gpt-3.5-turbo-0125 \
 
 lint:

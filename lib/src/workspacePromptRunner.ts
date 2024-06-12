@@ -47,11 +47,13 @@ export const workspacePromptRunner = async (
     );
   }
 
-  info(
-    `Preview files: ${prompt.previewFileContents?.filesProcessed.length}`,
-    args.progressLogFunc,
-    args.progressLogLevel,
-  );
+  if (prompt.previewFileContents) {
+    info(
+      `Preview files: ${prompt.previewFileContents?.filesProcessed.length}`,
+      args.progressLogFunc,
+      args.progressLogLevel,
+    );
+  }
 
   const requestedFilesDir =
     args.codePromptGeneratorArgs.workspaceFiles.fullContents?.baseDir ||
@@ -116,9 +118,11 @@ const sendAndProcessWorkspacePrompt = async (
         seed: 0, // make the output more deterministic amongst calls
         top_p: 0.95,
         model: args.model,
+        max_tokens: 4096, // adding this setting made the model more stable in regard to not truncating the output
       },
       maxTokensPerRequest: args.maxTokensPerRequest,
       maxTokensTotal: args.maxTokensTotal,
+      maxPrompts: args.maxPrompts,
     });
   }
 
@@ -144,6 +148,10 @@ ${output.response}`,
   );
 
   const promptOutput = parsePromptOutput(output.response);
+
+  if (promptOutput.notes) {
+    selfOutput.notes.push(...promptOutput.notes);
+  }
 
   // CODE GENERATED
   if (promptOutput.outcome === 'codes-generated') {
@@ -190,15 +198,11 @@ ${output.response}`,
         },
         selfOutput,
       );
+      return selfOutput;
     }
 
     // FILES REQUESTED
   } else if (promptOutput.outcome === 'files-requested') {
-    additionalFilesCounter += 1;
-    if (additionalFilesCounter > 1) {
-      throw new Error('files-requested outcome loop detected. Aborting.');
-    }
-
     if (!promptOutput.files) {
       throw new Error('files-requested outcome should have a file list');
     }
@@ -209,23 +213,35 @@ ${output.response}`,
       args.progressLogLevel,
     );
 
-    const filePatterns = promptOutput.files
-      .filter((file) => file.relevance && file.relevance >= 0.5)
-      .map((file) => file.filename);
+    let prompt = '';
+    additionalFilesCounter += 1;
+    if (additionalFilesCounter > (args.requestedFilesLimits.maxFileRequests || 2)) {
+      info(
+        `Max number of file requests reached, proceeding without additional files`,
+        args.progressLogFunc,
+        args.progressLogLevel,
+      );
+    } else {
+      const filePatterns = promptOutput.files
+        .filter((file) => file.relevance && file.relevance >= 0.5)
+        .map((file) => file.filename);
 
-    const requestedFilesPrompt = promptFileContents({
-      baseDir: args.requestedFilesDir,
-      filePatterns,
-      ...args.requestedFilesLimits,
-    });
+      const requestedFilesPrompt = promptFileContents({
+        baseDir: args.requestedFilesDir,
+        filePatterns,
+        ...args.requestedFilesLimits,
+      });
 
-    info(
-      `Additional files provided: ${requestedFilesPrompt.filesProcessed.length}`,
-      args.progressLogFunc,
-      args.progressLogLevel,
-    );
+      info(
+        `Additional files provided: ${requestedFilesPrompt.filesProcessed.length}`,
+        args.progressLogFunc,
+        args.progressLogLevel,
+      );
 
-    let prompt = requestedFilesPrompt.fileContentsPrompt;
+      prompt = requestedFilesPrompt.fileContentsPrompt;
+    }
+
+    // if no files were provided or if the max number of requests were reached, proceed without additional files
     if (!prompt) {
       prompt = 'Proceed without additional files';
     }
@@ -238,12 +254,9 @@ ${output.response}`,
       },
       selfOutput,
     );
+    return selfOutput;
   } else if (promptOutput.outcome !== 'notes-generated') {
     throw new Error(`Unexpected response from model: ${output.response}`);
-  }
-
-  if (promptOutput.notes) {
-    selfOutput.notes.push(...promptOutput.notes);
   }
 
   const stats = chatSession.stats();
@@ -269,6 +282,7 @@ ${output.response}`,
 
 const costTable: { [model: string]: { in: number; out: number } } = {
   'gpt-4o': { in: 5 / 1000000, out: 15 / 1000000 },
+  'gpt-4-turbo': { in: 10 / 1000000, out: 30 / 1000000 },
   'gpt-3.5-turbo-0125': { in: 0.5 / 1000000, out: 1.5 / 1000000 },
 };
 

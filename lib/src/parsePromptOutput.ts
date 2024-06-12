@@ -20,9 +20,17 @@ export const parsePromptOutput = (output: string): z.infer<typeof PromptOutputSc
   // remove ``` markers from the output
   if (out.startsWith('```json')) {
     out = output.slice(7);
+  } else if (out.startsWith('```')) {
+    out = output.slice(3);
   }
   if (out.endsWith('```')) {
     out = out.slice(0, -3);
   }
-  return PromptOutputSchema.parse(JSON.parse(out));
+  try {
+    return PromptOutputSchema.parse(JSON.parse(out));
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.log(`Error parsing prompt output. Output:\n${out}`);
+    throw new Error(`Failed to parse prompt output: ${e}`);
+  }
 };
