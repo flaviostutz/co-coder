@@ -32,9 +32,9 @@ run-example-openai:
 run-example-azure:
 	rm -rf .out
 	pnpm exec ts-node src/main.ts run \
-		--task "Convert main.ts to Golang" \
+		--task "Convert the entire program starting from main.ts to Golang" \
 		--files **/main.ts \
-		--preview README.md \
+		--preview **/*.ts \
 		--model gpt-4-turbo \
 		--output .out \
 		--max-tokens-total 40000 \

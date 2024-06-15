@@ -1,4 +1,4 @@
-import crc32 from 'crc/crc32';
+import crypto from 'crypto';
 
 export type PromptResponse = {
   header: Header;
@@ -21,8 +21,8 @@ export type Content = {
   motivation: string;
   content: string;
   size: number;
-  crc32: string;
-  crcOK: boolean;
+  md5: string;
+  md5OK: boolean;
 };
 
 export const parseHeader = (promptResult: string): Header => {
@@ -48,7 +48,7 @@ export const parseFooter = (promptResult: string): Footer => {
 
 export const parseContents = (promptResult: string): Content[] => {
   const regex =
-    /CONTENT_START\s*\(filename="(.*)";\s*relevance=(\d*);\s*motivation="(.*)"\)\s*\n*(.*)\n*CONTENT_END\s*\(size=(\d+);\s*crc32="(.*)"\)/g;
+    /CONTENT_START\s*\(filename="(.*)";\s*relevance=(\d*);\s*motivation="(.*)"\)\s*\n*(.*)\n*CONTENT_END\s*\(size=(\d+);\s*md5="(.*)"\)/gs;
   const matches = [...promptResult.matchAll(regex)];
 
   if (!matches || matches.length === 0) throw new Error('Contents not found');
@@ -58,7 +58,9 @@ export const parseContents = (promptResult: string): Content[] => {
   matches.forEach((match) => {
     const [, filename, relevance, motivation, content] = match;
     const size = parseInt(match[5], 10);
-    const crc32p = match[6].toLowerCase();
+    const md5p = match[6].toLowerCase();
+
+    const calcMD5 = crypto.createHash('md5').update(content).digest('hex');
 
     contents.push({
       filename,
@@ -66,8 +68,8 @@ export const parseContents = (promptResult: string): Content[] => {
       motivation,
       content,
       size,
-      crc32: crc32p,
-      crcOK: crc32(content).toString(16).toLowerCase() === crc32p,
+      md5: md5p,
+      md5OK: calcMD5 === md5p,
     });
   });
 
@@ -75,6 +77,7 @@ export const parseContents = (promptResult: string): Content[] => {
 };
 
 export const parsePromptResponse = (output: string): PromptResponse => {
+  console.log(`PARSING "${output}"`);
   return {
     header: parseHeader(output),
     contents: parseContents(output),

@@ -47,7 +47,6 @@
   },
   "dependencies": {
     "@azure/identity": "^4.2.0",
-    "crc": "^4.3.2",
     "esbuild": "^0.19.11",
     "fast-glob": "^3.3.2",
     "gpt-tokenizer": "^2.1.2",

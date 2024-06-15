@@ -121,7 +121,7 @@ const sendAndProcessWorkspacePrompt = async (
         seed: 0, // make the output more deterministic amongst calls
         top_p: 0.95,
         model: args.model,
-        max_tokens: 300, // adding this setting made the model more stable in regard to not truncating the output
+        max_tokens: 1000, // adding this setting made the model more stable in regard to not truncating the output
       },
       maxTokensPerRequest: args.maxTokensPerRequest,
       maxTokensTotal: args.maxTokensTotal,

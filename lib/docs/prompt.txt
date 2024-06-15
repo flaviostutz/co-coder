@@ -10,7 +10,7 @@ Generate 3 random notes with 10 words each
 - Each generated file, requested file list or notes should be output using the following template:
 'CONTENT_START (filename="{filename if appliable}"; relevance={a score between 1-10}; motivation="{motivation in 10 words}")
 {file contents if exists}
-CONTENT_END (size={content length}; crc32={crc32 hex for contents}')
+CONTENT_END (size={content length}; md5={md5 hex for contents}')
 - Use the same output even if it is a continuation          
 - When continuing a response, don't skip or repeat any characters                            
 
