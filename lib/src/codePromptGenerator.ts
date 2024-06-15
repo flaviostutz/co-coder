@@ -118,7 +118,7 @@ ${checkValidString(
 * Each generated file, requested file list or notes should be output using the following template:
 'CONTENT_START (filename="{filename if appliable}"; relevance={a score between 1-10}; motivation="{motivation in 10 words}")
 {file contents if exists}
-CONTENT_END (size={content length}; crc32={crc32 hex for contents}')
+CONTENT_END (size={content length}; md5="{md5 hash hex for contents}")')
 * When continuing a response, don't skip or repeat any characters
 * After generating all contents, end response with 'FOOTER (hasMoreToGenerate={true or false})'
 
@@ -126,7 +126,6 @@ CONTENT_END (size={content length}; crc32={crc32 hex for contents}')
 * If asking for more files, set outcome to "files-requested" and generate the list of requested files with motivation and relevance
 * If notes were generated, but no source code, set outcome to "notes-generated" and include the notes in the "notes" array
 * If you have more source codes that could be generated, set "hasMoreToGenerate" to true in footer. Otherwise, set it to false
-
 
 `;
 

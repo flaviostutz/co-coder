@@ -10,10 +10,10 @@ describe('parsePromptResponse', () => {
     const output = `HEADER (outcome="files-generated"; count=2)
 CONTENT_START (filename="test1.txt"; relevance=5; motivation="example")
 This is the first test content.
-CONTENT_END (size=31; crc32="731B2E56")
+CONTENT_END (size=31; md5="68c575e20772ee543cd906fe0d0a8e4d")
 CONTENT_START (filename="test2.txt"; relevance=8; motivation="example")
 This is the second test content.
-CONTENT_END (size=31; crc32="f4b80d72")
+CONTENT_END (size=31; md5="444121b9607ee3b8330a523883baf409")
 FOOTER (hasMoreToGenerate=false)`;
 
     const result = parsePromptResponse(output);
@@ -30,8 +30,8 @@ FOOTER (hasMoreToGenerate=false)`;
           motivation: 'example',
           content: 'This is the first test content.',
           size: 31,
-          crc32: '731b2e56',
-          crcOK: true,
+          md5: '68c575e20772ee543cd906fe0d0a8e4d',
+          md5OK: true,
         },
         {
           filename: 'test2.txt',
@@ -39,8 +39,8 @@ FOOTER (hasMoreToGenerate=false)`;
           motivation: 'example',
           content: 'This is the second test content.',
           size: 31,
-          crc32: 'f4b80d72',
-          crcOK: true,
+          md5: '444121b9607ee3b8330a523883baf409',
+          md5OK: true,
         },
       ],
       footer: {
@@ -55,7 +55,7 @@ CONTENT_START (filename="test1.txt"; relevance=5; motivation="example")
 This is fragmented contents...
 CONTENT_START (filename="test2.txt"; relevance=8; motivation="example")
 This is the second test content.
-CONTENT_END (size=31; crc32="f4b80d72")
+CONTENT_END (size=31; md5="444121b9607ee3b8330a523883baf409")
 FOOTER (hasMoreToGenerate=false)`;
 
     const result = parsePromptResponse(output);
@@ -72,8 +72,8 @@ FOOTER (hasMoreToGenerate=false)`;
           motivation: 'example',
           content: 'This is the second test content.',
           size: 31,
-          crc32: 'f4b80d72',
-          crcOK: true,
+          md5: '444121b9607ee3b8330a523883baf409',
+          md5OK: true,
         },
       ],
       footer: {

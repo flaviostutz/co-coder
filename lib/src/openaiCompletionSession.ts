@@ -44,6 +44,9 @@ export const createOpenAICompletionSession = (
         // after the first time in this loop, the requests are for completing fragmented response continuation (reason='length')
         if (!lastFinishReason) {
           conversation.push({ role: 'user', content: prompt });
+        } else {
+          console.log('Continuing response...');
+          // conversation.push({ role: 'user', content: 'continue' });
         }
 
         // check max tokens in this session
@@ -77,7 +80,14 @@ export const createOpenAICompletionSession = (
         lastFinishReason = response.choices[0].finish_reason;
 
         const completion = response.choices[0].message.content;
+        console.log(JSON.stringify(response.choices[0], null, 2));
         if (completion) {
+          // TODO alert: it possibly corrupts the file contents, but we don't know how to deal with it in a better way
+          // between responses, add a space because the various APIs calls
+          // ends with tokens, which means that between the last token of one response
+          // and the first token of the next response we don't really know if there
+          // is a space, \n or \t separating them
+          // messageContents += `${messageContents ? ' ' : ''}${completion}`;
           messageContents += completion;
         }
 

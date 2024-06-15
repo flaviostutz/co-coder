@@ -45,7 +45,7 @@ describe('workspacePromptRunner', () => {
             content: `HEADER (outcome="files-generated"; count=1)
 CONTENT_START (filename="new-code.txt"; relevance=10; motivation="example")
 THIS IS A NEW CODE!!
-CONTENT_END (size=20; crc32="f4b80d72")
+CONTENT_END (size=20; md5="f4b80d72")
 FOOTER (hasMoreToGenerate=false)`,
           },
           finish_reason: 'stop',
@@ -100,7 +100,7 @@ FOOTER (hasMoreToGenerate=false)`,
             content: `HEADER (outcome="files-generated"; count=1)
 CONTENT_START (filename="new-code.txt"; relevance=10; motivation="example")
 test code
-CONTENT_END (size=20; crc32="f4b80d72")
+CONTENT_END (size=20; md5="f4b80d72")
 FOOTER (hasMoreToGenerate=false)`,
           },
           finish_reason: 'stop',
@@ -153,9 +153,9 @@ FOOTER (hasMoreToGenerate=false)`,
             role: 'assistant',
             content: `HEADER (outcome="files-requested"; count=2)
 CONTENT_START (filename="unknown-additional-file.txt"; relevance=10; motivation="example")
-CONTENT_END (size=20; crc32="f4b80d72")
+CONTENT_END (size=20; md5="f4b80d72")
 CONTENT_START (filename="file5.txt"; relevance=10; motivation="example")
-CONTENT_END (size=20; crc32="f4b80d72")
+CONTENT_END (size=20; md5="f4b80d72")
 FOOTER (hasMoreToGenerate=false)`,
           },
           finish_reason: 'stop',
@@ -177,7 +177,7 @@ FOOTER (hasMoreToGenerate=false)`,
             content: `HEADER (outcome="files-generated"; count=1)
 CONTENT_START (filename="new-code.txt"; relevance=10; motivation="example")
 THIS IS A NEW CODE!!
-CONTENT_END (size=20; crc32="f4b80d72")
+CONTENT_END (size=20; md5="f4b80d72")
 FOOTER (hasMoreToGenerate=true)`,
           },
           finish_reason: 'stop',
@@ -199,7 +199,7 @@ FOOTER (hasMoreToGenerate=true)`,
             content: `HEADER (outcome="files-generated"; count=1)
 CONTENT_START (filename="new-code2.txt"; relevance=10; motivation="example")
 THIS IS A NEW CODE22!!
-CONTENT_END (size=20; crc32="f4b80d72")
+CONTENT_END (size=20; md5="f4b80d72")
 FOOTER (hasMoreToGenerate=false)`,
           },
         },
