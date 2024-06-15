@@ -34,6 +34,7 @@ export const log = (
 ): void => {
   const logFuncLevelNumber = progressLogLevelToNumber(logFuncLevel);
   const messageLogLevelNumber = progressLogLevelToNumber(msgLevel);
+  // console.log(message);
   if (logFunc) {
     if (logFuncLevel === 'off') {
       return;

@@ -20,8 +20,14 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
   }
 
   let fileContentsPrompt = '';
-  const maxFileSize = args.maxFileSize || 20000;
-  const maxTokens = args.maxTokens || 50000;
+
+  let { maxFileSize, maxTokens } = args;
+  if (typeof maxFileSize === 'undefined') {
+    maxFileSize = 20000;
+  }
+  if (typeof maxTokens === 'undefined') {
+    maxTokens = 50000;
+  }
 
   const filesProcessed: string[] = [];
   const filesSkipped: string[] = [];

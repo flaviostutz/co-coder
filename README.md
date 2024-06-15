@@ -10,6 +10,8 @@ We will structure the LLM prompts with the different aspects that have to be tak
 
 The difference to Github Co-Pilot is that you can use more advanced OpenAI models with much larger contexts to process more complex tasks that involves the entire workspace, for example. For simple tasks, Co-Pilot is the way to go.
 
+The prompts and output format was crafted in a way that the model can continue generating the files with continuation after finish_reason="length" while generating long contents that exceeds "max_tokens".
+
 ## Usage
 
 ## CLI tool
@@ -84,3 +86,21 @@ cli-tool run --task "generate unit tests" --files ["src/app.ts"] --output "."
 ```
 
 This command will generate unit tests for the file src/app.ts in the workspace
+
+```sh
+co-coder run --task "fix any bugs in these files" --files "src/*.ts" --model "gpt-3.5-turbo-0125"
+```
+
+This command will fix bugs in all TypeScript files in the `src` directory using the `gpt-3.5-turbo-0125` model.
+
+```sh
+co-coder run --task "generate documentation for these files" --files "src/**/*.ts" --output "docs"
+```
+
+This command will generate documentation for all TypeScript files in the `src` directory and output the generated files to the `docs` directory.
+
+
+## TODO
+  - convert JSON file contents back to ``` because it uses 30% less output tokens
+  - create a way to generate file in fragments for responses bigger than the max_tokens permitted for the model
+  

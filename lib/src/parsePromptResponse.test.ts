@@ -1,0 +1,101 @@
+import {
+  parseContents,
+  parseFooter,
+  parseHeader,
+  parsePromptResponse,
+} from './parsePromptResponse';
+
+describe('parsePromptResponse', () => {
+  it('should correctly parse a prompt response with valid input', () => {
+    const output = `HEADER (outcome="files-generated"; count=2)
+CONTENT_START (filename="test1.txt"; relevance=5; motivation="example")
+This is the first test content.
+CONTENT_END (size=31; crc32="731B2E56")
+CONTENT_START (filename="test2.txt"; relevance=8; motivation="example")
+This is the second test content.
+CONTENT_END (size=31; crc32="f4b80d72")
+FOOTER (hasMoreToGenerate=false)`;
+
+    const result = parsePromptResponse(output);
+
+    expect(result).toStrictEqual({
+      header: {
+        outcome: 'files-generated',
+        count: 2,
+      },
+      contents: [
+        {
+          filename: 'test1.txt',
+          relevance: 5,
+          motivation: 'example',
+          content: 'This is the first test content.',
+          size: 31,
+          crc32: '731b2e56',
+          crcOK: true,
+        },
+        {
+          filename: 'test2.txt',
+          relevance: 8,
+          motivation: 'example',
+          content: 'This is the second test content.',
+          size: 31,
+          crc32: 'f4b80d72',
+          crcOK: true,
+        },
+      ],
+      footer: {
+        hasMoreToGenerate: false,
+      },
+    });
+  });
+
+  it('should ignore fragmented content', () => {
+    const output = `HEADER (outcome="files-generated"; count=2)
+CONTENT_START (filename="test1.txt"; relevance=5; motivation="example")
+This is fragmented contents...
+CONTENT_START (filename="test2.txt"; relevance=8; motivation="example")
+This is the second test content.
+CONTENT_END (size=31; crc32="f4b80d72")
+FOOTER (hasMoreToGenerate=false)`;
+
+    const result = parsePromptResponse(output);
+
+    expect(result).toStrictEqual({
+      header: {
+        outcome: 'files-generated',
+        count: 2,
+      },
+      contents: [
+        {
+          filename: 'test2.txt',
+          relevance: 8,
+          motivation: 'example',
+          content: 'This is the second test content.',
+          size: 31,
+          crc32: 'f4b80d72',
+          crcOK: true,
+        },
+      ],
+      footer: {
+        hasMoreToGenerate: false,
+      },
+    });
+  });
+
+  it('should throw an error for invalid input', () => {
+    const output = `Invalid input format`;
+    expect(() => parsePromptResponse(output)).toThrow('Header not found');
+  });
+  it('should throw an error for invalid header', () => {
+    const output = `Invalid input format`;
+    expect(() => parseHeader(output)).toThrow('Header not found');
+  });
+  it('should throw an error for invalid footer', () => {
+    const output = `Invalid input format`;
+    expect(() => parseFooter(output)).toThrow('Footer not found');
+  });
+  it('should throw an error for invalid contents', () => {
+    const output = `Invalid input format`;
+    expect(() => parseContents(output)).toThrow('Contents not found');
+  });
+});

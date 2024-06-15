@@ -9,6 +9,7 @@ import {
   SendPromptResponse,
   SessionStats,
 } from './types';
+import { defaultValue } from './utils';
 
 export const createOpenAICompletionSession = (
   openaiClient: OpenAI,
@@ -19,70 +20,81 @@ export const createOpenAICompletionSession = (
   ];
   let promptCounter = 0;
 
-  const maxPrompts = completionOptions.maxPrompts || 5;
-  const maxTokensPerRequest = completionOptions.maxTokensPerRequest || 4000;
-  const maxTokensTotal = completionOptions.maxTokensTotal || 12000;
+  const maxPrompts = defaultValue(completionOptions.maxPrompts, 5);
+  const maxTokensPerRequest = defaultValue(completionOptions.maxTokensPerRequest, 4000);
+  const maxTokensTotal = defaultValue(completionOptions.maxTokensTotal, 12000);
 
   let sessionInputTokens = 0;
   let sessionOutputTokens = 0;
 
   return {
     sendPrompt: async (prompt: string): Promise<SendPromptResponse> => {
-      // check max prompts
-      promptCounter += 1;
-      if (promptCounter > maxPrompts) {
-        throw new Error(`Too many prompts in this session (${promptCounter}/${maxPrompts})`);
-      }
-      conversation.push({ role: 'user', content: prompt });
+      let lastFinishReason = '';
+      let messageContents = '';
 
-      // check max tokens in this session
-      // '_' is added because if input is empty, isWithinTokenLimit function returns false
-      const fullContents = `_ ${JSON.stringify(conversation.map((m) => m.content))}`;
-      const requestTokensCount = encode(fullContents).length;
+      // re-send prompts until the response is completed (reason!='length')
+      do {
+        // check max prompts
+        promptCounter += 1;
+        if (promptCounter > maxPrompts) {
+          throw new Error(`Too many prompts in this session (${promptCounter}/${maxPrompts})`);
+        }
 
-      // the actual totalTokensCounter will be updated from the response usage info later on
-      // but for now we do a check based on the request tokens to avoid sending too many tokens to the API beforehand
-      const sessionTotalTokens = sessionInputTokens + sessionOutputTokens + requestTokensCount;
-      if (sessionTotalTokens > maxTokensTotal) {
-        throw new Error(
-          `Exceeded max total tokens sent/received to/from the API in this session. ${sessionTotalTokens}/${maxTokensTotal}`,
-        );
-      }
+        // send user message only in the first prompt pass
+        // after the first time in this loop, the requests are for completing fragmented response continuation (reason='length')
+        if (!lastFinishReason) {
+          conversation.push({ role: 'user', content: prompt });
+        }
 
-      if (!isWithinTokenLimit(fullContents, maxTokensPerRequest)) {
-        throw new Error(
-          `Exceeded max tokens per request. ${requestTokensCount}/${maxTokensPerRequest}`,
-        );
-      }
+        // check max tokens in this session
+        // '_' is added because if input is empty, isWithinTokenLimit function returns false
+        const fullContents = `_ ${JSON.stringify(conversation.map((m) => m.content))}`;
+        const requestTokensCount = encode(fullContents).length;
 
-      // send request to openai api
-      const response = await openaiClient.chat.completions.create({
-        ...completionOptions.openaiConfig,
-        messages: conversation,
-        stream: false,
-      });
+        // the actual totalTokensCounter will be updated from the response usage info later on
+        // but for now we do a check based on the request tokens to avoid sending too many tokens to the API beforehand
+        const sessionTotalTokens = sessionInputTokens + sessionOutputTokens + requestTokensCount;
+        if (sessionTotalTokens > maxTokensTotal) {
+          throw new Error(
+            `Exceeded max total tokens sent/received to/from the API in this session. ${sessionTotalTokens}/${maxTokensTotal}`,
+          );
+        }
 
-      // process response
-      if (response.choices[0].finish_reason !== 'stop') {
-        throw new Error(
-          `Response 'finish_reason' is ${response.choices[0].finish_reason} (should be 'stop')`,
-        );
-      }
-      const completion = response.choices[0].message.content;
+        if (!isWithinTokenLimit(fullContents, maxTokensPerRequest)) {
+          throw new Error(
+            `Exceeded max tokens per request. ${requestTokensCount}/${maxTokensPerRequest}`,
+          );
+        }
 
-      if (!response.usage?.total_tokens) {
-        throw new Error('response.usage.total_tokens is empty');
-      }
-      sessionOutputTokens += response.usage.completion_tokens;
-      sessionInputTokens += response.usage.prompt_tokens;
+        // send request to openai api
+        // eslint-disable-next-line no-await-in-loop
+        const response = await openaiClient.chat.completions.create({
+          ...completionOptions.openaiConfig,
+          messages: conversation,
+          stream: false,
+        });
 
-      if (!completion) {
-        throw new Error('Response message content is empty');
-      }
-      conversation.push({ role: 'assistant', content: completion });
+        lastFinishReason = response.choices[0].finish_reason;
+
+        const completion = response.choices[0].message.content;
+        if (completion) {
+          messageContents += completion;
+        }
+
+        if (!response.usage?.total_tokens) {
+          throw new Error('response.usage.total_tokens is empty');
+        }
+        sessionOutputTokens += response.usage.completion_tokens;
+        sessionInputTokens += response.usage.prompt_tokens;
+
+        if (!completion) {
+          throw new Error('Response message content is empty');
+        }
+        conversation.push({ role: 'assistant', content: completion });
+      } while (lastFinishReason === 'length');
 
       return {
-        response: completion,
+        response: messageContents,
         conversation,
         sessionInputTokens,
         sessionOutputTokens,

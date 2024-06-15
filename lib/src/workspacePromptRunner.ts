@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 /* eslint-disable camelcase */
 import path from 'path';
 import fs from 'fs';
@@ -5,11 +6,12 @@ import fs from 'fs';
 import openai from 'openai';
 
 import { codePromptGenerator } from './codePromptGenerator';
-import { parsePromptOutput } from './parsePromptOutput';
 import { promptFileContents } from './promptFileContents';
 import { createOpenAICompletionSession } from './openaiCompletionSession';
 import { debug, info, trace } from './progressLog';
 import { PromptProcessResult, SendAndProcessPromptArgs, WorkspacePromptRunnerArgs } from './types';
+import { defaultValue } from './utils';
+import { parsePromptResponse } from './parsePromptResponse';
 
 /**
  * Generate prompt based on workspace file, send it to OpenAI API, process its response (sometimes it will send additional files as requested by the model) and write any generated files to the output directory
@@ -119,7 +121,7 @@ const sendAndProcessWorkspacePrompt = async (
         seed: 0, // make the output more deterministic amongst calls
         top_p: 0.95,
         model: args.model,
-        max_tokens: 4096, // adding this setting made the model more stable in regard to not truncating the output
+        max_tokens: 300, // adding this setting made the model more stable in regard to not truncating the output
       },
       maxTokensPerRequest: args.maxTokensPerRequest,
       maxTokensTotal: args.maxTokensTotal,
@@ -148,43 +150,40 @@ ${output.response}`,
     args.progressLogLevel,
   );
 
-  const promptOutput = parsePromptOutput(output.response);
+  const promptOutput = parsePromptResponse(output.response);
 
-  if (promptOutput.notes) {
-    selfOutput.notes.push(...promptOutput.notes);
-  }
-
-  // CODE GENERATED
-  if (promptOutput.outcome === 'codes-generated') {
-    if (!promptOutput.files) {
-      throw new Error('codes-generated outcome should have a file list');
+  // FILES GENERATED
+  if (promptOutput.header.outcome === 'files-generated') {
+    if (!promptOutput.contents || promptOutput.contents.length === 0) {
+      throw new Error('files-generated outcome should have a file list');
     }
-    const outputFiles = promptOutput.files;
-    debug(`Saving files to ${args.outputDir}`);
+    const outputFiles = promptOutput.contents;
     info(`Files generated: ${outputFiles.length}`, args.progressLogFunc, args.progressLogLevel);
 
     for (let i = 0; i < outputFiles.length; i += 1) {
       const file = outputFiles[i];
       const filePath = path.join(args.outputDir, file.filename);
 
-      debug(`  ${file.filename}`);
+      info(`  ${file.filename}`);
 
-      if (!file.contents) {
-        throw new Error('File contents should not be empty');
+      if (!file.content) {
+        throw new Error('File content should not be empty');
       }
 
       // create folder if it doesn't exist
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
       // write file (replace if exists)
-      fs.writeFileSync(filePath, file.contents);
+      fs.writeFileSync(filePath, file.content);
 
       if (typeof selfOutput === 'undefined') {
         throw new Error('selfOutput shouldnt be undefined');
       }
       selfOutput.generatedFiles.push(filePath);
     }
-    if (promptOutput.hasMoreToGenerate) {
+    debug(`Saving files to ${args.outputDir}`);
+
+    if (promptOutput.footer.hasMoreToGenerate) {
       info(
         `Asking for additional files to be generated`,
         args.progressLogFunc,
@@ -195,7 +194,7 @@ ${output.response}`,
         {
           ...args,
           openAICompletionSession: chatSession,
-          prompt: 'generate additional source codes',
+          prompt: 'generate additional files or source codes',
         },
         selfOutput,
       );
@@ -203,29 +202,40 @@ ${output.response}`,
     }
 
     // FILES REQUESTED
-  } else if (promptOutput.outcome === 'files-requested') {
-    if (!promptOutput.files) {
+  } else if (promptOutput.header.outcome === 'files-requested') {
+    if (!promptOutput.contents || promptOutput.contents.length === 0) {
       throw new Error('files-requested outcome should have a file list');
     }
 
     info(
-      `Additional files requested: ${promptOutput.files.length}`,
+      `Files requested: ${promptOutput.contents.length}`,
       args.progressLogFunc,
       args.progressLogLevel,
     );
+    for (let i = 0; i < promptOutput.contents.length; i += 1) {
+      const file = promptOutput.contents[i];
+      debug(
+        `  ${file.filename} (${file.relevance}) ${file.motivation}`,
+        args.progressLogFunc,
+        args.progressLogLevel,
+      );
+    }
 
     let prompt = '';
     additionalFilesCounter += 1;
-    if (additionalFilesCounter > (args.requestedFilesLimits.maxFileRequests || 2)) {
+
+    const maxFileRequests = defaultValue(args.requestedFilesLimits.maxFileRequests, 2);
+
+    if (additionalFilesCounter > maxFileRequests) {
       info(
         `Max number of file requests reached, proceeding without additional files`,
         args.progressLogFunc,
         args.progressLogLevel,
       );
     } else {
-      const filePatterns = promptOutput.files
-        .filter((file) => file.relevance && file.relevance >= 0.5)
-        .map((file) => file.filename);
+      const filePatterns = promptOutput.contents
+        .filter((content) => content.relevance && content.relevance >= 0.5)
+        .map((content) => content.filename);
 
       const requestedFilesPrompt = promptFileContents({
         baseDir: args.requestedFilesDir,
@@ -234,10 +244,14 @@ ${output.response}`,
       });
 
       info(
-        `Additional files provided: ${requestedFilesPrompt.filesProcessed.length}`,
+        `Files provided: ${requestedFilesPrompt.filesProcessed.length}`,
         args.progressLogFunc,
         args.progressLogLevel,
       );
+      for (let i = 0; i < requestedFilesPrompt.filesProcessed.length; i += 1) {
+        const file = requestedFilesPrompt.filesProcessed;
+        debug(`  ${file}`, args.progressLogFunc, args.progressLogLevel);
+      }
 
       prompt = requestedFilesPrompt.fileContentsPrompt;
     }
@@ -256,8 +270,12 @@ ${output.response}`,
       selfOutput,
     );
     return selfOutput;
-  } else if (promptOutput.outcome !== 'notes-generated') {
-    throw new Error(`Unexpected response from model: ${output.response}`);
+  } else if (promptOutput.header.outcome === 'notes-generated') {
+    if (promptOutput.contents) {
+      selfOutput.notes.push(...promptOutput.contents.map((content) => content.content));
+    }
+  } else {
+    throw new Error(`Unexpected outcome: ${promptOutput.header.outcome}`);
   }
 
   const stats = chatSession.stats();

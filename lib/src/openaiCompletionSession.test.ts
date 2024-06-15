@@ -204,4 +204,50 @@ describe('createOpenAICompletionSession', () => {
       "Why don't scientists trust atoms? Because they make up everything!",
     );
   });
+
+  it('should send a prompt and receive a completion after re-sending continuation requests multiple times because max tokens were reached', async () => {
+    const prompt = 'Hello, AI!';
+
+    // first fragment
+    (openaiClient.chat.completions.create as jest.Mock).mockResolvedValueOnce({
+      id: 'test-id',
+      object: 'chat.completion',
+      created: 1234567890,
+      model: 'gpt-3.5-turbo',
+      usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
+      choices: [{ message: { role: 'assistant', content: 'Hel' }, finish_reason: 'length' }],
+    });
+
+    // second fragment
+    (openaiClient.chat.completions.create as jest.Mock).mockResolvedValueOnce({
+      id: 'test-id',
+      object: 'chat.completion',
+      created: 1234567890,
+      model: 'gpt-3.5-turbo',
+      usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
+      choices: [{ message: { role: 'assistant', content: 'lo, hu' }, finish_reason: 'length' }],
+    });
+
+    // third fragment
+    (openaiClient.chat.completions.create as jest.Mock).mockResolvedValueOnce({
+      id: 'test-id',
+      object: 'chat.completion',
+      created: 1234567890,
+      model: 'gpt-3.5-turbo',
+      usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
+      choices: [{ message: { role: 'assistant', content: 'man!!' }, finish_reason: 'stop' }],
+    });
+
+    const response = await session.sendPrompt(prompt);
+
+    expect(response.response).toEqual('Hello, human!!');
+    expect(response.conversation.length).toBe(5);
+    expect(response.conversation).toStrictEqual([
+      { role: 'system', content: 'You are an AI assistant that helps people find information.' },
+      { role: 'user', content: prompt },
+      { role: 'assistant', content: 'Hel' },
+      { role: 'assistant', content: 'lo, hu' },
+      { role: 'assistant', content: 'man!!' },
+    ]);
+  });
 });
