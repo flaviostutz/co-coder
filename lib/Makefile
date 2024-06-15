@@ -16,15 +16,17 @@ build: install
 run-example-openai:
 	rm -rf .out
 	pnpm exec ts-node src/main.ts run \
-		--task "Convert main.ts to Golang" \
-		--files **/main.ts \
+		--task "Migrate only file cli.ts to Golang" \
+		--files **/cli.ts \
 		--model gpt-4o \
 		--output .out \
 		--max-tokens-total 50000 \
 		--max-file-requests 5 \
-		--log debug \
+		--preview-size 0 \
+		--log trace \
 		--api-key "$$(security find-generic-password -w -a flaviostutz -s flaviostutz-openai-apikey)"
 
+	@# --task "Convert main.ts to Golang"
 	@# --task "Write a documentation for the cli with a summary, api and examples of usage" \
 
 run-example-azure:

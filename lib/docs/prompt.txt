@@ -1,0 +1,38 @@
+Generate a list of 5 files that should be requested in order to prepare a presentation for the quarterly results of a mineration company
+
+Create two programs in Python with 6 lines each with functions numbered incrementally that generate random strings
+
+Generate 3 random notes with 10 words each    
+
+- Only return the generated files without any additional explanation
+- Generate files with source code contents or with other type of contents if requested
+- The first prompt response should start with HEADER (outcome="{one of: files-generated, files-requested, notes-generated}"; count={number files requested or notes generated})
+- Each generated file, requested file list or notes should be output using the following template:
+'CONTENT_START (filename="{filename if appliable}"; relevance={a score between 1-10}; motivation="{motivation in 10 words}")
+{file contents if exists}
+CONTENT_END (size={content length}; crc32={crc32 hex for contents}')
+- Use the same output even if it is a continuation          
+- When continuing a response, don't skip or repeat any characters                            
+
+- After generating all files, end response with "FINISHED"  
+
+continue
+
+
+
+
+* Your answers should be written using json format following the template below:
+\`\`\`json
+{
+  "outcome": "{one of: codes-generated, files-requested, notes-generated}",
+  "files": [
+    {
+      "filename": "{filename relative to workspace path}",
+      "contents": "{file contents}",
+      "relevance": {numeric score from 1 to 10 of the file relevance in the context of the task}
+    }
+  ],
+  "notes": ["{note1}", "{note2}"]
+  "hasMoreToGenerate": true
+}
+\`\`\`

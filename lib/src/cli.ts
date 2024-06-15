@@ -11,6 +11,7 @@ import { DefaultAzureCredential, getBearerTokenProvider } from '@azure/identity'
 import { workspacePromptRunner } from './workspacePromptRunner';
 import { WorkspacePromptRunnerArgs } from './types';
 import { ProgressLogLevel } from './progressLog';
+import { defaultValue } from './utils';
 
 // Define the command line arguments
 // eslint-disable-next-line no-unused-expressions, @typescript-eslint/no-unused-expressions, @typescript-eslint/no-floating-promises
@@ -67,7 +68,7 @@ export const run = async (processArgs: string[]): Promise<number> => {
             describe:
               'Max size of contents for the preview files. If "0", only the file name will be included in the prompt',
             type: 'array',
-            default: 300,
+            default: 0,
             demandOption: false,
           })
           .option('example', {
@@ -222,32 +223,32 @@ export const run = async (processArgs: string[]): Promise<number> => {
 };
 
 function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePromptRunnerArgs {
-  const baseDir = defaultValue(argv.workspace, '.') as string;
-  const filesIgnore = defaultValue(argv['files-ignore'], undefined) as string[] | undefined;
-  const fullFiles = defaultValue(argv.files, undefined) as string[] | undefined;
-  const previewFiles = defaultValue(argv.preview, undefined) as string[] | undefined;
-  const previewSize = defaultIntValue(argv['preview-size'], 300) as number;
-  const useGitIgnore = defaultValue(argv['use-gitignore'], true) as boolean;
+  const baseDir = defaultValue(argv.workspace as string, '.');
+  const filesIgnore = defaultValue(argv['files-ignore'] as string[], []);
+  const fullFiles = defaultValue(argv.files as string[], []);
+  const previewFiles = defaultValue(argv.preview as string[] | undefined, undefined);
+  const previewSize = defaultValue(argv['preview-size'] as number, 0);
+  const useGitIgnore = defaultValue(argv['use-gitignore'] as boolean, true);
 
-  const task = defaultValue(argv.task, undefined) as string | undefined;
-  const projectInformation = defaultValue(argv.info, undefined) as string | undefined;
+  const task = defaultValue(argv.task as string | undefined, undefined);
+  const projectInformation = defaultValue(argv.info as string | undefined, undefined);
   const example = defaultValue(argv.example, undefined) as string | undefined;
 
   const model = argv.model as openai.ChatModel;
-  const apiProvider = defaultValue(argv['api-provider'], 'openai') as string;
+  const apiProvider = defaultValue(argv['api-provider'] as string, 'openai');
   const apiURL = argv['api-url'] as string | undefined;
-  const apiVersion = defaultValue(argv['api-azure-version'], '2024-02-01') as string;
+  const apiVersion = defaultValue(argv['api-azure-version'] as string, '2024-02-01');
   const apiKey = argv['api-key'] as string | undefined;
   const apiAuth = defaultValue(argv['api-auth'], 'apikey');
 
-  const maxPrompts = defaultIntValue(argv['max-prompts'], 20) as number;
-  const maxFileRequests = defaultValue(argv['max-file-requests'], 2) as number;
-  const maxFileSize = defaultIntValue(argv['max-file-size'], 10000) as number;
-  const maxTokensTotal = defaultIntValue(argv['max-tokens-total'], 6000) as number;
-  const maxTokensFile = defaultIntValue(argv['max-tokens-file'], 5000) as number;
-  const maxTokensPerRequest = defaultIntValue(argv['max-tokens-per-request'], 128000) as number;
-  const outputDir = defaultValue(argv.output, '.out') as string;
-  const progressLogLevel = defaultValue(argv.log, 'info') as ProgressLogLevel;
+  const maxPrompts = defaultValue(argv['max-prompts'] as number, 20);
+  const maxFileRequests = defaultValue(argv['max-file-requests'] as number, 2);
+  const maxFileSize = defaultValue(argv['max-file-size'] as number, 10000);
+  const maxTokensTotal = defaultValue(argv['max-tokens-total'] as number, 6000);
+  const maxTokensFile = defaultValue(argv['max-tokens-file'] as number, 5000);
+  const maxTokensPerRequest = defaultValue(argv['max-tokens-per-request'] as number, 128000);
+  const outputDir = defaultValue(argv.output as string, '.out');
+  const progressLogLevel = defaultValue(argv.log as ProgressLogLevel, 'info');
 
   if (!task) {
     throw new Error('"task" is required');
@@ -354,16 +355,4 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
   };
 
   return args;
-}
-
-function defaultValue<T>(arg: T | undefined, defaultV: T | undefined): T | undefined {
-  // eslint-disable-next-line no-undefined
-  const v = arg !== undefined && arg !== null ? arg : defaultV;
-  return v;
-}
-
-function defaultIntValue(arg: any | undefined, defaultV: number | undefined): number | undefined {
-  // eslint-disable-next-line no-undefined
-  const v = arg !== undefined && arg !== null ? parseInt(arg, 10) : defaultV;
-  return v;
 }

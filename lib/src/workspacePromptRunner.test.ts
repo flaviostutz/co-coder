@@ -42,15 +42,11 @@ describe('workspacePromptRunner', () => {
         {
           message: {
             role: 'assistant',
-            content: JSON.stringify({
-              outcome: 'codes-generated',
-              files: [
-                {
-                  filename: 'new-code.txt',
-                  contents: 'THIS IS A NEW CODE!!',
-                },
-              ],
-            }),
+            content: `HEADER (outcome="files-generated"; count=1)
+CONTENT_START (filename="new-code.txt"; relevance=10; motivation="example")
+THIS IS A NEW CODE!!
+CONTENT_END (size=20; crc32="f4b80d72")
+FOOTER (hasMoreToGenerate=false)`,
           },
           finish_reason: 'stop',
         },
@@ -101,15 +97,11 @@ describe('workspacePromptRunner', () => {
         {
           message: {
             role: 'assistant',
-            content: JSON.stringify({
-              outcome: 'codes-generated',
-              files: [
-                {
-                  filename: 'new-code.txt',
-                  contents: 'TEST CODE',
-                },
-              ],
-            }),
+            content: `HEADER (outcome="files-generated"; count=1)
+CONTENT_START (filename="new-code.txt"; relevance=10; motivation="example")
+test code
+CONTENT_END (size=20; crc32="f4b80d72")
+FOOTER (hasMoreToGenerate=false)`,
           },
           finish_reason: 'stop',
         },
@@ -159,10 +151,12 @@ describe('workspacePromptRunner', () => {
         {
           message: {
             role: 'assistant',
-            content: JSON.stringify({
-              outcome: 'files-requested',
-              files: [{ filename: 'unknown-additional-file.txt' }, { filename: 'file5.txt' }],
-            }),
+            content: `HEADER (outcome="files-requested"; count=2)
+CONTENT_START (filename="unknown-additional-file.txt"; relevance=10; motivation="example")
+CONTENT_END (size=20; crc32="f4b80d72")
+CONTENT_START (filename="file5.txt"; relevance=10; motivation="example")
+CONTENT_END (size=20; crc32="f4b80d72")
+FOOTER (hasMoreToGenerate=false)`,
           },
           finish_reason: 'stop',
         },
@@ -180,17 +174,11 @@ describe('workspacePromptRunner', () => {
         {
           message: {
             role: 'assistant',
-            content: JSON.stringify({
-              outcome: 'codes-generated',
-              files: [
-                {
-                  filename: 'new-code.txt',
-                  contents: 'THIS IS A NEW CODE!!',
-                },
-              ],
-              hasMoreToGenerate: true, // indicates that some files weren't generated in this response
-              notes: ['This is a note.'],
-            }),
+            content: `HEADER (outcome="files-generated"; count=1)
+CONTENT_START (filename="new-code.txt"; relevance=10; motivation="example")
+THIS IS A NEW CODE!!
+CONTENT_END (size=20; crc32="f4b80d72")
+FOOTER (hasMoreToGenerate=true)`,
           },
           finish_reason: 'stop',
         },
@@ -208,17 +196,12 @@ describe('workspacePromptRunner', () => {
         {
           message: {
             role: 'assistant',
-            content: JSON.stringify({
-              outcome: 'codes-generated',
-              files: [
-                {
-                  filename: 'new-code-hasmore.txt',
-                  contents: 'THIS IS A NEW CODE HAS MORE!!',
-                },
-              ],
-            }),
+            content: `HEADER (outcome="files-generated"; count=1)
+CONTENT_START (filename="new-code2.txt"; relevance=10; motivation="example")
+THIS IS A NEW CODE22!!
+CONTENT_END (size=20; crc32="f4b80d72")
+FOOTER (hasMoreToGenerate=false)`,
           },
-          finish_reason: 'stop',
         },
       ],
     });

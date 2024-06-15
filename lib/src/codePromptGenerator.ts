@@ -49,7 +49,7 @@ ${args.taskDescription}
 
 * Act as a senior developer that is very good at design, maintaining projects structures and communicating your decisions via comments
 * Ignore comments in this prompt that are marked as markdown comments (e.g.: <!-- this is a comment -->)
-* Don't bullshit in your answers. Be precise and tell when you don't know how to do something.
+* Be precise and tell when you don't know how to do something.
 * Don't appologize
 * Don't ask questions if you have options that can be followed by default
 * Think step by step
@@ -111,27 +111,22 @@ ${checkValidString(
 
 ## Output Indicator
 
-* All your answers should be written using json format following the template below:
-\`\`\`json
-{
-  "outcome": "{one of: codes-generated, files-requested, notes-generated}",
-  "files": [
-    {
-      "filename": "{filename relative to workspace path}",
-      "contents": "{file contents}",
-      "relevance": {numeric score from 1 to 10 of the file relevance in the context of the task}
-    }
-  ],
-  "notes": ["{note1}", "{note2}"]
-  "hasMoreToGenerate": true
-}
-\`\`\`
-* If source code was generated set outcome to "codes-generated" and include the generated files in the "files" array
-* If asking for more files, set outcome to "files-requested" and include the list of requested files in the "files" array without the contents
-* If notes were generated, but no source code, set outcome to "notes-generated" and include the notes in the "notes" array
-* If you have more source codes that could be generated, set "hasMoreToGenerate" to true. Otherwise, set it to false
-* If a generated file doesn't fully fit in the response because of token limits, finish the response and mark it with "hasMoreToGenerate": true. The next response should continue from where the previous one stopped
 * Don't explain the reasoning, only generate code, ask for files or generate notes
+* Generate files with source code contents or with other type of contents if requested
+
+* The first prompt response should start with 'HEADER (outcome="{one of: files-generated, files-requested, notes-generated}"; count={number files requested or notes generated})'
+* Each generated file, requested file list or notes should be output using the following template:
+'CONTENT_START (filename="{filename if appliable}"; relevance={a score between 1-10}; motivation="{motivation in 10 words}")
+{file contents if exists}
+CONTENT_END (size={content length}; crc32={crc32 hex for contents}')
+* When continuing a response, don't skip or repeat any characters
+* After generating all contents, end response with 'FOOTER (hasMoreToGenerate={true or false})'
+
+* If source code was generated set outcome to "files-generated" and generate the file contents with source codes
+* If asking for more files, set outcome to "files-requested" and generate the list of requested files with motivation and relevance
+* If notes were generated, but no source code, set outcome to "notes-generated" and include the notes in the "notes" array
+* If you have more source codes that could be generated, set "hasMoreToGenerate" to true in footer. Otherwise, set it to false
+
 
 `;
 
