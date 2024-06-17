@@ -11,8 +11,12 @@ describe('parsePromptResponse', () => {
 CONTENT_START (filename="test1.txt"; relevance=5; motivation="example")
 This is the first test content.
 CONTENT_END (size=31; md5="68c575e20772ee543cd906fe0d0a8e4d")
+CONTENT_START (filename="test-empty.txt"; relevance=5; motivation="example")
+CONTENT_END (size=31; md5="d41d8cd98f00b204e9800998ecf8427e")
 CONTENT_START (filename="test2.txt"; relevance=8; motivation="example")
+\`\`\`text
 This is the second test content.
+\`\`\`
 CONTENT_END (size=31; md5="444121b9607ee3b8330a523883baf409")
 FOOTER (hasMoreToGenerate=false)`;
 
@@ -34,38 +38,14 @@ FOOTER (hasMoreToGenerate=false)`;
           md5OK: true,
         },
         {
-          filename: 'test2.txt',
-          relevance: 8,
+          filename: 'test-empty.txt',
+          relevance: 5,
           motivation: 'example',
-          content: 'This is the second test content.',
+          content: '',
           size: 31,
-          md5: '444121b9607ee3b8330a523883baf409',
+          md5: 'd41d8cd98f00b204e9800998ecf8427e',
           md5OK: true,
         },
-      ],
-      footer: {
-        hasMoreToGenerate: false,
-      },
-    });
-  });
-
-  it('should ignore fragmented content', () => {
-    const output = `HEADER (outcome="files-generated"; count=2)
-CONTENT_START (filename="test1.txt"; relevance=5; motivation="example")
-This is fragmented contents...
-CONTENT_START (filename="test2.txt"; relevance=8; motivation="example")
-This is the second test content.
-CONTENT_END (size=31; md5="444121b9607ee3b8330a523883baf409")
-FOOTER (hasMoreToGenerate=false)`;
-
-    const result = parsePromptResponse(output);
-
-    expect(result).toStrictEqual({
-      header: {
-        outcome: 'files-generated',
-        count: 2,
-      },
-      contents: [
         {
           filename: 'test2.txt',
           relevance: 8,

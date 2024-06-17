@@ -39,9 +39,9 @@ ${args.taskDescription}
 
   3. Which additional files would you want to see its contents to help you improving the solution? Answer with the list of files ordered by relevance (most relevant first). Only request files that you didn't receive yet and limit this list to the 30 most important files.
 
-  4. After receiving additional files, analyse if they are enough to generate the most complete solution possible. If not, repeat step 3 until you have all necessary files
+  4. If you need more files, repeat step 2 until you have all necessary files
 
-  5. After you receive the required files, proceed with code generation
+  5. After you have enough files, proceed with code generation
 
 ## Context
 
@@ -52,10 +52,7 @@ ${args.taskDescription}
 * Be precise and tell when you don't know how to do something.
 * Don't appologize
 * Don't ask questions if you have options that can be followed by default
-* Think step by step
-* Imagine that you have multiple developers doing the same task in parallel and before coming with the final result you compare all results and selects which one is the best fit to the instructions in this request
 * Only output generated code or notes with instructions about things you need in order to improve the solution
-* Make questions only when strictly necessary
 
 ### Coding instructions
 
@@ -111,8 +108,7 @@ ${checkValidString(
 
 ## Output Indicator
 
-* Don't explain the reasoning, only generate code, ask for files or generate notes
-* Generate files with source code contents or with other type of contents if requested
+* Don't explain. Just generate files or notes as requested
 
 * The first prompt response should start with 'HEADER (outcome="{one of: files-generated, files-requested, notes-generated}"; count={number files requested or notes generated})'
 * Each generated file, requested file list or notes should be output using the following template:
@@ -124,7 +120,7 @@ CONTENT_END (size={content length}; md5="{md5 hash hex for contents}")')
 
 * If source code was generated set outcome to "files-generated" and generate the file contents with source codes
 * If asking for more files, set outcome to "files-requested" and generate the list of requested files with motivation and relevance
-* If notes were generated, but no source code, set outcome to "notes-generated" and include the notes in the "notes" array
+* If notes are generated, but no source code, set outcome to "notes-generated" and add create one CONTENT per note with the note contents
 * If you have more source codes that could be generated, set "hasMoreToGenerate" to true in footer. Otherwise, set it to false
 
 `;

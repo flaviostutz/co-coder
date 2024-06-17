@@ -17,7 +17,8 @@ run-example-openai:
 	rm -rf .out
 	pnpm exec ts-node src/main.ts run \
 		--task "Migrate only file cli.ts to Golang" \
-		--files **/cli.ts \
+		--files "**/cli.ts" \
+		--files-ignore "**/*.test.ts" \
 		--model gpt-4o \
 		--output .out \
 		--max-tokens-total 50000 \
@@ -33,12 +34,14 @@ run-example-azure:
 	rm -rf .out
 	pnpm exec ts-node src/main.ts run \
 		--task "Convert the entire program starting from main.ts to Golang" \
-		--files **/main.ts \
-		--preview **/*.ts \
+		--files "**/main.ts,**/cli.ts,**/workspacePromptRunner.ts,**/types.ts,**/openaiCompletionSession.ts" \
+		--files-ignore "**/*.test.ts" \
 		--model gpt-4-turbo \
 		--output .out \
-		--max-tokens-total 40000 \
+		--max-tokens-total 200000 \
+		--max-tokens-files 128000 \
 		--max-file-requests 5 \
+		--max-file-size 50000 \
 		--log debug \
 		--api-provider azure \
 		--api-url https://sc01openaiservices03.openai.azure.com/ \
