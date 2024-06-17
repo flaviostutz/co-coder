@@ -11,7 +11,7 @@ import { DefaultAzureCredential, getBearerTokenProvider } from '@azure/identity'
 import { workspacePromptRunner } from './workspacePromptRunner';
 import { WorkspacePromptRunnerArgs } from './types';
 import { ProgressLogLevel } from './progressLog';
-import { defaultValue } from './utils';
+import { defaultValue, splitComma } from './utils';
 
 // Define the command line arguments
 // eslint-disable-next-line no-unused-expressions, @typescript-eslint/no-unused-expressions, @typescript-eslint/no-floating-promises
@@ -40,14 +40,15 @@ export const run = async (processArgs: string[]): Promise<number> => {
           .option('files', {
             alias: 'f',
             describe:
-              'Blob patterns for file names that will have its full content included in the prompt. e.g. "src/**/*.ts"',
-            type: 'array',
+              'Blob patterns for file names that will have its full content included in the prompt. e.g. "src/**/*.ts,**/*.json"',
+            type: 'string',
             demandOption: false,
           })
           .option('files-ignore', {
             alias: 'fi',
-            describe: 'Blob patterns for file names that will never be used',
-            type: 'array',
+            describe:
+              'Blob patterns for file names that will never be used. e.g "**/*.test.ts,**/*.md"',
+            type: 'string',
             demandOption: false,
           })
           .option('use-gitignore', {
@@ -60,14 +61,14 @@ export const run = async (processArgs: string[]): Promise<number> => {
             alias: 'p',
             describe:
               'Blob patterns for file names that will have its partial content included in the prompt. e.g. "docs/**/*.md"',
-            type: 'array',
+            type: 'string',
             demandOption: false,
           })
           .option('preview-size', {
             alias: 'ps',
             describe:
               'Max size of contents for the preview files. If "0", only the file name will be included in the prompt',
-            type: 'array',
+            type: 'number',
             default: 0,
             demandOption: false,
           })
@@ -224,9 +225,9 @@ export const run = async (processArgs: string[]): Promise<number> => {
 
 function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePromptRunnerArgs {
   const baseDir = defaultValue(argv.workspace as string, '.');
-  const filesIgnore = defaultValue(argv['files-ignore'] as string[], []);
-  const fullFiles = defaultValue(argv.files as string[], []);
-  const previewFiles = defaultValue(argv.preview as string[] | undefined, undefined);
+  const fullFiles = splitComma(defaultValue(argv.files as string, ''));
+  const previewFiles = splitComma(defaultValue(argv.preview as string | undefined, undefined));
+  const filesIgnore = splitComma(defaultValue(argv['files-ignore'] as string, ''));
   const previewSize = defaultValue(argv['preview-size'] as number, 0);
   const useGitIgnore = defaultValue(argv['use-gitignore'] as boolean, true);
 
@@ -245,7 +246,7 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
   const maxFileRequests = defaultValue(argv['max-file-requests'] as number, 2);
   const maxFileSize = defaultValue(argv['max-file-size'] as number, 10000);
   const maxTokensTotal = defaultValue(argv['max-tokens-total'] as number, 6000);
-  const maxTokensFile = defaultValue(argv['max-tokens-file'] as number, 5000);
+  const maxTokensFiles = defaultValue(argv['max-tokens-files'] as number, 5000);
   const maxTokensPerRequest = defaultValue(argv['max-tokens-per-request'] as number, 128000);
   const outputDir = defaultValue(argv.output as string, '.out');
   const progressLogLevel = defaultValue(argv.log as ProgressLogLevel, 'info');
@@ -316,7 +317,7 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
       useGitIgnore,
       ignoreFilePatterns: filesIgnore,
       maxFileSize: previewSize,
-      maxTokens: maxTokensFile,
+      maxTokens: maxTokensFiles,
     };
   }
 
@@ -330,7 +331,7 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
           useGitIgnore,
           ignoreFilePatterns: filesIgnore,
           maxFileSize,
-          maxTokens: maxTokensFile,
+          maxTokens: maxTokensFiles,
         },
         previewContents,
       },
@@ -344,7 +345,7 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
     maxPrompts,
     requestedFilesLimits: {
       maxFileSize,
-      maxTokens: maxTokensFile,
+      maxTokens: maxTokensFiles,
       useGitIgnore,
       ignoreFilePatterns: filesIgnore,
       maxFileRequests,

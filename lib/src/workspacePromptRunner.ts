@@ -28,6 +28,12 @@ export const workspacePromptRunner = async (
     args.progressLogFunc,
     args.progressLogLevel,
   );
+  if (prompt.fullFileContents?.filesProcessed) {
+    for (let i = 0; i < prompt.fullFileContents?.filesProcessed.length; i += 1) {
+      const file = prompt.fullFileContents?.filesProcessed[i];
+      debug(`  ${file}`, args.progressLogFunc, args.progressLogLevel);
+    }
+  }
 
   if (prompt.fullFileContents && prompt.fullFileContents.filesTruncated.length > 0) {
     info(
@@ -55,6 +61,12 @@ export const workspacePromptRunner = async (
       args.progressLogFunc,
       args.progressLogLevel,
     );
+    if (prompt.previewFileContents?.filesProcessed) {
+      for (let i = 0; i < prompt.previewFileContents?.filesProcessed.length; i += 1) {
+        const file = prompt.previewFileContents?.filesProcessed[i];
+        debug(`  ${file}`, args.progressLogFunc, args.progressLogLevel);
+      }
+    }
   }
 
   const requestedFilesDir =
@@ -121,7 +133,7 @@ const sendAndProcessWorkspacePrompt = async (
         seed: 0, // make the output more deterministic amongst calls
         top_p: 0.95,
         model: args.model,
-        max_tokens: 1000, // adding this setting made the model more stable in regard to not truncating the output
+        max_tokens: 4096, // adding this setting made the model more stable in regard to not truncating the output
       },
       maxTokensPerRequest: args.maxTokensPerRequest,
       maxTokensTotal: args.maxTokensTotal,
@@ -249,7 +261,7 @@ ${output.response}`,
         args.progressLogLevel,
       );
       for (let i = 0; i < requestedFilesPrompt.filesProcessed.length; i += 1) {
-        const file = requestedFilesPrompt.filesProcessed;
+        const file = requestedFilesPrompt.filesProcessed[i];
         debug(`  ${file}`, args.progressLogFunc, args.progressLogLevel);
       }
 

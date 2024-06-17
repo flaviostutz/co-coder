@@ -77,6 +77,7 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
       }
       // ignore this file if we reached the token limit
     } else {
+      console.log(`Skipping file due to token limit (${maxTokens}): ${relativePath}`);
       filesSkipped.push(relativePath);
     }
   }

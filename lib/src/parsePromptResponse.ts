@@ -48,7 +48,7 @@ export const parseFooter = (promptResult: string): Footer => {
 
 export const parseContents = (promptResult: string): Content[] => {
   const regex =
-    /CONTENT_START\s*\(filename="(.*)";\s*relevance=(\d*);\s*motivation="(.*)"\)\s*\n*(.*)\n*CONTENT_END\s*\(size=(\d+);\s*md5="(.*)"\)/gs;
+    /CONTENT_START\s*?\(filename="(.*?)";\s*relevance=(\d*?);\s*motivation="(.*?)"\)\s*?\n(.*?)\n*?CONTENT_END\s*?\(size=(\d+?);\s*?md5="(.*?)"\)/gs;
   const matches = [...promptResult.matchAll(regex)];
 
   if (!matches || matches.length === 0) throw new Error('Contents not found');
@@ -57,16 +57,20 @@ export const parseContents = (promptResult: string): Content[] => {
 
   matches.forEach((match) => {
     const [, filename, relevance, motivation, content] = match;
+
+    // Remove ``` from the beginning or end of the content
+    const contentStr = content.replaceAll(/^```.*?\n|\n```$/g, '');
+
     const size = parseInt(match[5], 10);
     const md5p = match[6].toLowerCase();
 
-    const calcMD5 = crypto.createHash('md5').update(content).digest('hex');
+    const calcMD5 = crypto.createHash('md5').update(contentStr).digest('hex');
 
     contents.push({
       filename,
       relevance: parseInt(relevance, 10),
       motivation,
-      content,
+      content: contentStr,
       size,
       md5: md5p,
       md5OK: calcMD5 === md5p,
@@ -77,7 +81,6 @@ export const parseContents = (promptResult: string): Content[] => {
 };
 
 export const parsePromptResponse = (output: string): PromptResponse => {
-  console.log(`PARSING "${output}"`);
   return {
     header: parseHeader(output),
     contents: parseContents(output),
