@@ -240,6 +240,54 @@ FOOTER (hasMoreToGenerate=false)`,
     expect(result.generatedFiles).toHaveLength(2);
   });
 
+  it('should create notes if model outputs contents outside desired patterns (parse error)', async () => {
+    const prompt = 'This is a sample prompt.';
+
+    // answer with generated code (file new-code.txt)
+    openAIClient.chat.completions.create.mockResolvedValueOnce({
+      id: 'test-id',
+      object: 'chat.completion',
+      created: 1234567890,
+      model: 'gpt-3.5-turbo',
+      usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
+      choices: [
+        {
+          message: {
+            role: 'assistant',
+            content: `THIS IS AN INVALID RESPONSE, OUTSIDE OF THE EXPECTED PATTERN`,
+          },
+          finish_reason: 'stop',
+        },
+      ],
+    });
+
+    const result = await workspacePromptRunner({
+      codePromptGeneratorArgs: {
+        taskDescription: prompt,
+        workspaceFiles: {
+          fullContents: {
+            baseDir: tempDir,
+            filePatterns: ['file1.txt', 'file2.txt'],
+          },
+        },
+        example: 'Use all files in the workspace as an example.',
+      },
+      openAIClient,
+      model: 'gpt-3.5-turbo',
+      outputDir: tempDir,
+      requestedFilesLimits: {
+        maxFileSize: 10000,
+        maxTokens: 5000,
+        ignoreFilePatterns: [],
+      },
+    });
+
+    expect(result.notes).toHaveLength(1);
+    expect(result.notes[0]).toBe(
+      'Model response: THIS IS AN INVALID RESPONSE, OUTSIDE OF THE EXPECTED PATTERN',
+    );
+  });
+
   afterEach(() => {
     // clean up the temporary directory
     fs.rmSync(tempDir, { recursive: true });

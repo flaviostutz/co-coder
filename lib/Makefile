@@ -16,7 +16,7 @@ build: install
 run-example-openai:
 	rm -rf .out
 	pnpm exec ts-node src/main.ts run \
-		--task "Migrate only file cli.ts to Golang" \
+		--task "Migrate the whole workspace to Golang, starting from cli.ts" \
 		--files "**/cli.ts" \
 		--files-ignore "**/*.test.ts" \
 		--model gpt-4o \
@@ -33,9 +33,9 @@ run-example-openai:
 run-example-azure:
 	rm -rf .out
 	pnpm exec ts-node src/main.ts run \
-		--task "Convert the entire program starting from main.ts to Golang" \
-		--files "**/main.ts,**/cli.ts,**/workspacePromptRunner.ts,**/types.ts,**/openaiCompletionSession.ts" \
-		--files-ignore "**/*.test.ts" \
+		--task "Convert the entire program to Python, starting from main.ts" \
+		--files "**/main.ts" \
+		--files-ignore "**/*.test.ts,.out2" \
 		--model gpt-4-turbo \
 		--output .out \
 		--max-tokens-total 200000 \
@@ -47,8 +47,10 @@ run-example-azure:
 		--api-url https://sc01openaiservices03.openai.azure.com/ \
 		--api-key "$$(security find-generic-password -w -a flaviostutz -s nn-azure-openai-sc01openaiservices03)"
 
+	@#--task "Traverse the code dependencies starting from main.ts and save the list of files that should be migrated to Golang from the least dependant to the most dependant module to plan.txt" \
 	@# --task "Describe what the file workspacePromptRunner does and write the output to the file /summary.md"
 	@# --model gpt-3.5-turbo-0125 \
+
 
 lint:
 	pnpm exec eslint ./src --ext .ts

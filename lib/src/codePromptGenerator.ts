@@ -31,17 +31,30 @@ export const codePromptGenerator = (args: CodePromptGeneratorArgs): CodePromptGe
 
 ${args.taskDescription}
   
-  ### Approach
-
-  1. Always generate the output according to the "Output Indicator" instructions
+  ### Approach (THIS IS VERY IMPORTANT TO FOLLOW)
   
-  2. Analyse the request, but don't generate any codes yet
+  1. Don't generate any codes until you have analyzed the whole task and has requested all files you need
 
-  3. Which additional files would you want to see its contents to help you improving the solution? Answer with the list of files ordered by relevance (most relevant first). Only request files that you didn't receive yet and limit this list to the 30 most important files.
+  2. Analyse the task and the files that you already received
 
-  4. If you need more files, repeat step 2 until you have all necessary files
+  3. Keep asking for additional files until you have everything you need to generate the response files. In that case, answer with the list of files ordered by relevance (most relevant first). Only request files that you didn't receive yet and limit this list to the 30 most important files.
 
-  5. After you have enough files, proceed with code generation
+  4. After you finish analyzing the whole task with all necessary files, generate the resulting files according to "Output Indicator" sectio without asking for any permission. Order the file generation according to the least dependant file to the most dependant file. Generate the files in this order.
+
+## Output Indicator (THIS IS VERY IMPORTANT TO FOLLOW)
+
+* The first prompt response should start with 'HEADER (outcome="{one of: files-generated, files-requested, notes-generated}"; count={number files requested or notes generated})'
+* Each generated file, requested file list or notes should be output using the following template:
+'CONTENT_START (filename="{filename if appliable}"; relevance={a score between 1-10}; motivation="{motivation in 10 words}")
+{file contents if exists}
+CONTENT_END (size={content length}; md5="{md5 hash hex for contents}")')
+* When continuing a response, don't skip or repeat any characters
+* After generating all contents, end response with 'FOOTER (hasMoreToGenerate={true or false})'
+
+* If source code was generated set outcome to "files-generated" and generate the file contents with source codes
+* If asking for more files, set outcome to "files-requested" and generate the list of requested files with motivation and relevance
+* If notes are generated, but no source code, set outcome to "notes-generated" and add create one CONTENT per note with the note contents
+* If you have more files that could be generated, set "hasMoreToGenerate" to true in footer. Otherwise, set it to false
 
 ## Context
 
@@ -51,8 +64,9 @@ ${args.taskDescription}
 * Ignore comments in this prompt that are marked as markdown comments (e.g.: <!-- this is a comment -->)
 * Be precise and tell when you don't know how to do something.
 * Don't appologize
+* Don't explain. Do.
 * Don't ask questions if you have options that can be followed by default
-* Only output generated code or notes with instructions about things you need in order to improve the solution
+* Output generated code comments or notes with instructions about things you need in order to improve the solution
 
 ### Coding instructions
 
@@ -105,23 +119,6 @@ ${checkValidString(
   args.example,
   'Do a best effort to generate code based on the structure and examples present in workspace files',
 )}
-
-## Output Indicator
-
-* Don't explain. Just generate files or notes as requested
-
-* The first prompt response should start with 'HEADER (outcome="{one of: files-generated, files-requested, notes-generated}"; count={number files requested or notes generated})'
-* Each generated file, requested file list or notes should be output using the following template:
-'CONTENT_START (filename="{filename if appliable}"; relevance={a score between 1-10}; motivation="{motivation in 10 words}")
-{file contents if exists}
-CONTENT_END (size={content length}; md5="{md5 hash hex for contents}")')
-* When continuing a response, don't skip or repeat any characters
-* After generating all contents, end response with 'FOOTER (hasMoreToGenerate={true or false})'
-
-* If source code was generated set outcome to "files-generated" and generate the file contents with source codes
-* If asking for more files, set outcome to "files-requested" and generate the list of requested files with motivation and relevance
-* If notes are generated, but no source code, set outcome to "notes-generated" and add create one CONTENT per note with the note contents
-* If you have more source codes that could be generated, set "hasMoreToGenerate" to true in footer. Otherwise, set it to false
 
 `;
 

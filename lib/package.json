@@ -22,14 +22,14 @@
   "scripts": {},
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/flaviostutz/llm-code-prompter.git"
+    "url": "git+https://github.com/flaviostutz/co-coder.git"
   },
   "author": "flaviostutz",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/flaviostutz/llm-code-prompter/issues"
+    "url": "https://github.com/flaviostutz/co-coder/issues"
   },
-  "homepage": "https://github.com/flaviostutz/llm-code-prompter#readme",
+  "homepage": "https://github.com/flaviostutz/co-coder#readme",
   "devDependencies": {
     "@babel/preset-typescript": "^7.21.0",
     "@stutzlab/eslint-config": "^3.0.4",
