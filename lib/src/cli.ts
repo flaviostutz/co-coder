@@ -30,8 +30,8 @@ export const run = async (processArgs: string[]): Promise<number> => {
             type: 'string',
             demandOption: false,
           })
-          .option('workspace', {
-            alias: 'w',
+          .option('base-dir', {
+            alias: 'b',
             describe: 'Base directory with workspace files',
             type: 'string',
             default: '.',
@@ -224,7 +224,7 @@ export const run = async (processArgs: string[]): Promise<number> => {
 };
 
 function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePromptRunnerArgs {
-  const baseDir = defaultValue(argv.workspace as string, '.');
+  const baseDir = defaultValue(argv['base-dir'] as string, '.');
   const fullFiles = splitComma(defaultValue(argv.files as string, ''));
   const previewFiles = splitComma(defaultValue(argv.preview as string | undefined, undefined));
   const filesIgnore = splitComma(defaultValue(argv['files-ignore'] as string, ''));

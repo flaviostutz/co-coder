@@ -2,6 +2,7 @@
 /* eslint-disable camelcase */
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 
 import openai from 'openai';
 
@@ -11,7 +12,7 @@ import { createOpenAICompletionSession } from './openaiCompletionSession';
 import { debug, info, trace } from './progressLog';
 import { PromptProcessResult, SendAndProcessPromptArgs, WorkspacePromptRunnerArgs } from './types';
 import { defaultValue } from './utils';
-import { parsePromptResponse } from './parsePromptResponse';
+import { PromptResponse, parsePromptResponse } from './parsePromptResponse';
 
 /**
  * Generate prompt based on workspace file, send it to OpenAI API, process its response (sometimes it will send additional files as requested by the model) and write any generated files to the output directory
@@ -129,9 +130,9 @@ const sendAndProcessWorkspacePrompt = async (
   if (!chatSession) {
     chatSession = createOpenAICompletionSession(args.openAIClient, {
       openaiConfig: {
-        temperature: 0, // make the output more deterministic amongst calls
         seed: 0, // make the output more deterministic amongst calls
-        top_p: 0.95,
+        temperature: 0.2, // make the output more deterministic amongst calls
+        top_p: 1, // default value (we are playing with temperature only)
         model: args.model,
         max_tokens: 4096, // adding this setting made the model more stable in regard to not truncating the output
       },
@@ -157,12 +158,36 @@ ${output.response}`,
     args.progressLogLevel,
   );
   info(
-    `Model invoked (tokens: ${output.sessionInputTokens + output.sessionOutputTokens})`,
+    `Model invoked (tokens: in=${output.sessionInputTokens}; out=${output.sessionOutputTokens})`,
     args.progressLogFunc,
     args.progressLogLevel,
   );
 
-  const promptOutput = parsePromptResponse(output.response);
+  let promptOutput: PromptResponse;
+  try {
+    promptOutput = parsePromptResponse(output.response);
+  } catch (err) {
+    debug(
+      `Model response could not be parsed. Creating note with response contents`,
+      args.progressLogFunc,
+      args.progressLogLevel,
+    );
+    promptOutput = {
+      header: { count: 1, outcome: 'notes-generated' },
+      contents: [
+        {
+          filename: 'notes.txt',
+          size: output.response.length,
+          md5: crypto.createHash('md5').update(output.response).digest('hex'),
+          md5OK: true,
+          relevance: 10,
+          motivation: 'content body',
+          content: `Model response: ${output.response}`,
+        },
+      ],
+      footer: { hasMoreToGenerate: false },
+    };
+  }
 
   // FILES GENERATED
   if (promptOutput.header.outcome === 'files-generated') {
@@ -206,7 +231,8 @@ ${output.response}`,
         {
           ...args,
           openAICompletionSession: chatSession,
-          prompt: 'generate additional files or source codes',
+          prompt:
+            'generate additional files or source codes. update already generated files if needed.',
         },
         selfOutput,
       );
@@ -246,7 +272,7 @@ ${output.response}`,
       );
     } else {
       const filePatterns = promptOutput.contents
-        .filter((content) => content.relevance && content.relevance >= 0.5)
+        // .filter((content) => content.relevance && content.relevance >= 5)
         .map((content) => content.filename);
 
       const requestedFilesPrompt = promptFileContents({
@@ -255,14 +281,18 @@ ${output.response}`,
         ...args.requestedFilesLimits,
       });
 
+      const missingFiles = promptOutput.contents.filter(
+        (item) => !requestedFilesPrompt.filesProcessed.includes(item.filename),
+      );
+
       info(
         `Files provided: ${requestedFilesPrompt.filesProcessed.length}`,
         args.progressLogFunc,
         args.progressLogLevel,
       );
-      for (let i = 0; i < requestedFilesPrompt.filesProcessed.length; i += 1) {
-        const file = requestedFilesPrompt.filesProcessed[i];
-        debug(`  ${file}`, args.progressLogFunc, args.progressLogLevel);
+      for (let i = 0; i < missingFiles.length; i += 1) {
+        const file = missingFiles[i];
+        debug(`  !${file.filename}`, args.progressLogFunc, args.progressLogLevel);
       }
 
       prompt = requestedFilesPrompt.fileContentsPrompt;

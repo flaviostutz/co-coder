@@ -80,9 +80,10 @@ export const createOpenAICompletionSession = (
         lastFinishReason = response.choices[0].finish_reason;
 
         const completion = response.choices[0].message.content;
-        console.log(JSON.stringify(response.choices[0], null, 2));
+        // console.log(JSON.stringify(response.choices[0], null, 2));
         if (completion) {
-          // TODO alert: it possibly corrupts the file contents, but we don't know how to deal with it in a better way
+          // TODO alert: in some cases this corrupts file contents, but we don't know
+          // how to deal with it in a better way as it seems that it stops in tokens and we can't know which is the separator of the token
           // between responses, add a space because the various APIs calls
           // ends with tokens, which means that between the last token of one response
           // and the first token of the next response we don't really know if there
