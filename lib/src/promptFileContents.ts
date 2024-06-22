@@ -77,6 +77,8 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
       }
       // ignore this file if we reached the token limit
     } else {
+      // TODO evolve logger lib and pass it as a parameter
+      // eslint-disable-next-line no-console
       console.log(`Skipping file due to token limit (${maxTokens}): ${relativePath}`);
       filesSkipped.push(relativePath);
     }

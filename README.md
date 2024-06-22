@@ -77,6 +77,8 @@ Run `npx co-coder --help` for a complete documentation
 
 ### Examples
 
+See a complete example at [examples](/examples/README.md). Also check the Makefile of this folder.
+
 Here are a few examples of how to use the CLI tool:
 
 ```sh

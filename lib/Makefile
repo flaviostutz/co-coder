@@ -4,11 +4,11 @@ build: install
 	@rm -rf dist
 
 	@# lib build
-	npx esbuild src/index.ts --bundle --platform=node --minify --outfile=dist/index.js
+	pnpm exec esbuild src/index.ts --bundle --platform=node --minify --outfile=dist/index.js
 
 	@# cli build
-	npx esbuild src/main.ts --bundle --platform=node --minify --outfile=dist/main.js
-	npx tsc --emitDeclarationOnly --outDir dist
+	pnpm exec esbuild src/main.ts --bundle --platform=node --minify --outfile=dist/main.js
+	pnpm exec tsc --emitDeclarationOnly --outDir dist
 
 	@# Create pack to be used by examples app to simulate real usage of the lib
 	pnpm pack --pack-destination dist
@@ -45,7 +45,7 @@ run-example-azure:
 		--log debug \
 		--api-provider azure \
 		--api-url https://sc01openaiservices03.openai.azure.com/ \
-		--api-key "$$(security find-generic-password -w -a flaviostutz -s nn-azure-openai-sc01openaiservices03)"
+		--api-key "$$(security find-generic-password -w -a flaviostutz -s azure-openai-sc01openaiservices03)"
 
 	@#--task "Traverse the code dependencies starting from main.ts and save the list of files that should be migrated to Golang from the least dependant to the most dependant module to plan.txt" \
 	@# --task "Describe what the file workspacePromptRunner does and write the output to the file /summary.md"

@@ -1,4 +1,4 @@
-name: master-build
+name: main-build
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    name: Build master
+    name: Build main branch
     uses: flaviostutz/gh-makefile/.github/workflows/make-ci.yml@main
     with:
       working-directory: ./
@@ -15,3 +15,5 @@ jobs:
       target-build: true
       target-lint: true
       target-unit-tests: true
+      stage: tst
+  

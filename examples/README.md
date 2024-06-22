@@ -6,3 +6,8 @@ This runs during release pipelines also to check if the lib is working while bei
 
 This example was copied from [cdk-practical-constructs](https://github.com/flaviostutz/cdk-practical-constructs) so we can exercise a more complex application with infrastructure and backend code along with some custom architecture to see if LLM can reason on the structure and create things on top of it.
 
+## Usage
+
+### Generate CDK Lambda services from WSDL
+
+`make generate-services-from-wsdl`
