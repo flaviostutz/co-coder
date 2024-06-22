@@ -1,13 +1,13 @@
 SHELL := /bin/bash
 
-generate-services-from-wsdl:
+generate-new-service:
 	rm -rf .out
-	npx -y co-coder src/main.ts run \
+	node_modules/.bin/co-coder run \
 		--task "Create a new service called 'deleteTodo' in apigateway module creating all openapi defs along with handlers, connectors and all boilerplace code for it in the correct places. Create a sample interface for this service as a starting point." \
 		--example "Use getTodo for a sample project structure" \
 		--info "This workspace is a monorepo with lots of different services and libraries reused among the packages. Each service has a CDK code, Lambda logic and a connector for other clients to connect to it." \
 		--base-dir "." \
-		--files "src/apigateway/handlers/http/getTodo/**/*.ts,src/apigateway/cdk/**/*.ts" \
+		--files "src/apigateway/handlers/http/getTodo/**/*.ts,src/apigateway/cdk.ts" \
 		--files-ignore "**/*.test.ts" \
 		--model gpt-4-turbo \
 		--output .out \

@@ -7365,7 +7365,7 @@ packages:
     dev: false
 
   file:../lib/dist/co-coder-0.0.1.tgz:
-    resolution: {integrity: sha512-RXe1nq2ZzUPa7x7/Quiyjvw/zYLt/nmB98r6ILW8Vv5LvwBWVFRAqVkxsQnOKuEz5GowI5WP5BxTctQ7Tymqkw==, tarball: file:../lib/dist/co-coder-0.0.1.tgz}
+    resolution: {integrity: sha512-9xmUpb6b7BHz9Dc3Isov57twAuZWrp9TpCt6TzSE0QrcdJ1S3aZT1Ot3U9D0E4jBF04HMHLI2gcoRevHChxA6w==, tarball: file:../lib/dist/co-coder-0.0.1.tgz}
     name: co-coder
     version: 0.0.1
     engines: {node: 18.x, npm: <0, pnpm: '=8.15.7', yarn: <0}

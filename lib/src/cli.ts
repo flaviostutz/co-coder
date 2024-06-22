@@ -4,7 +4,7 @@
 
 import path from 'path';
 
-import yargs from 'yargs';
+import yargs, { Argv } from 'yargs';
 import openai, { OpenAI, AzureOpenAI } from 'openai';
 import { DefaultAzureCredential, getBearerTokenProvider } from '@azure/identity';
 
@@ -22,14 +22,13 @@ export const run = async (processArgs: string[]): Promise<number> => {
     .command(
       'run',
       'Run a task in the context of workspace files and possibly generate new files based on the prompt',
-      () => {
-        yargs
-          .option('task', {
-            alias: 't',
-            describe: 'Task to be performed in the context of the workspace files',
-            type: 'string',
-            demandOption: false,
-          })
+      (y: Argv) => {
+        y.option('task', {
+          alias: 't',
+          describe: 'Task to be performed in the context of the workspace files',
+          type: 'string',
+          demandOption: false,
+        })
           .option('base-dir', {
             alias: 'b',
             describe: 'Base directory with workspace files',

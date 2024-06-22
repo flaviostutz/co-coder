@@ -7,8 +7,11 @@ build: install
 	pnpm exec esbuild src/index.ts --bundle --platform=node --minify --outfile=dist/index.js
 
 	@# cli build
-	pnpm exec esbuild src/main.ts --bundle --platform=node --minify --outfile=dist/main.js
+	pnpm exec esbuild src/main.ts --bundle --platform=node --outfile=dist/main.js
 	pnpm exec tsc --emitDeclarationOnly --outDir dist
+
+	@# remove all tests from distribution
+	@-find -E ./dist -regex '.*\.test\..*|.*__tests.*' -exec rm -rf {} \; 2> /dev/null
 
 	@# Create pack to be used by examples app to simulate real usage of the lib
 	pnpm pack --pack-destination dist
