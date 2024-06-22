@@ -3,8 +3,8 @@ SHELL := /bin/bash
 generate-services-from-wsdl:
 	rm -rf .out
 	npx -y co-coder src/main.ts run \
-		--task "Create a new service called 'updateLoan' in dossier service creating all openapi defs along with handlers, connectors and all boilerplace code for it in the correct places. Create a sample interface for this service as a starting point." \
-		--example "Use getLoan for a sample project structure" \
+		--task "Create a new service called 'deleteTodo' in apigateway module creating all openapi defs along with handlers, connectors and all boilerplace code for it in the correct places. Create a sample interface for this service as a starting point." \
+		--example "Use getTodo for a sample project structure" \
 		--info "This workspace is a monorepo with lots of different services and libraries reused among the packages. Each service has a CDK code, Lambda logic and a connector for other clients to connect to it." \
 		--base-dir "." \
 		--files "src/apigateway/handlers/http/getTodo/**/*.ts,src/apigateway/cdk/**/*.ts" \
