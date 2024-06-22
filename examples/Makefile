@@ -8,17 +8,11 @@ generate-new-service:
 		--info "This workspace is a monorepo with lots of different services and libraries reused among the packages. Each service has a CDK code, Lambda logic and a connector for other clients to connect to it." \
 		--base-dir "." \
 		--files "src/apigateway/handlers/http/getTodo/**/*.ts,src/apigateway/cdk.ts" \
-		--files-ignore "**/*.test.ts" \
 		--model gpt-4-turbo \
 		--output .out \
 		--max-tokens-total 50000 \
-		--max-tokens-files 128000 \
-		--max-file-requests 5 \
-		--max-file-size 50000 \
 		--log debug \
-		--api-provider azure \
-		--api-url $$(security find-generic-password -w -a flaviostutz -s azure-openai-api-url) \
-		--api-key "$$(security find-generic-password -w -a flaviostutz -s azure-openai-api-key)"
+		--api-key "$$(security find-generic-password -w -a flaviostutz -s flaviostutz-openai-apikey)"
 
 generate-services-from-wsdl:
 	rm -rf .out
@@ -28,18 +22,23 @@ generate-services-from-wsdl:
 		--info "This workspace is a monorepo with lots of different services and libraries reused among the packages. Each service has a CDK code, Lambda logic and a connector for other clients to connect to it." \
 		--base-dir "." \
 		--files "sample.wsdl,src/apigateway/handlers/http/getTodo/**/*.ts,src/apigateway/cdk.ts" \
-		--files-ignore "**/*.test.ts" \
 		--model gpt-4-turbo \
 		--output .out \
 		--max-tokens-total 200000 \
-		--max-tokens-files 128000 \
-		--max-file-requests 5 \
-		--max-file-size 50000 \
 		--log debug \
-		--api-provider azure \
-		--api-url $$(security find-generic-password -w -a flaviostutz -s azure-openai-api-url) \
-		--api-key "$$(security find-generic-password -w -a flaviostutz -s azure-openai-api-key)"
+		--api-key "$$(security find-generic-password -w -a flaviostutz -s flaviostutz-openai-apikey)"
 
+generate-add-comments:
+	rm -rf .out
+	npx -y co-coder run \
+		--task "add more comments to the existing codes" \
+		--base-dir "." \
+		--files "**/cdk/**" \
+		--model gpt-4-turbo \
+		--output "." \
+		--max-tokens-total 200000 \
+		--log debug \
+		--api-key "$$(security find-generic-password -w -a flaviostutz -s flaviostutz-openai-apikey)"
 
 build: install prereqs
 	pnpm exec tsc --outDir dist
