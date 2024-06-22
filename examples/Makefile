@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-build: install prereqs
+build: install
 	pnpm exec tsc --outDir dist
 	@set -x; STAGE=$${STAGE} pnpm exec cdk -o dist synth
 
@@ -36,8 +36,3 @@ deploy: prereqs
 undeploy: prereqs
 	@set -x; pnpm exec cdk -o dist destroy -f --require-approval never
 
-prereqs:
-	@if [ "$${STAGE}" == "" ]; then \
-		echo "ENV STAGE is required"; \
-		exit 1; \
-	fi
