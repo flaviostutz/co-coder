@@ -76,6 +76,7 @@ all: build lint test
 
 install:
 	# nvm install
+	-nvm use
 	corepack enable
 	pnpm install --frozen-lockfile --config.dedupe-peer-dependents=false
 
