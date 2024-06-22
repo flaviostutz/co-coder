@@ -1,0 +1,5 @@
+# This is here so when we run the tests, we don't accidentally add those files to the prompts
+dist
+.out
+.out2
+node_modules

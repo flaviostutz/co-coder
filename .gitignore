@@ -8,3 +8,4 @@ node_modules
 .tmp
 testcases
 .out
+.out2
