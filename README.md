@@ -12,7 +12,11 @@ By adding "info" and "example", you can prepare the tool to be used for differen
 
 The difference between Gihub Co-Pilot and Co-coder is that you can use more advanced OpenAI models with much larger contexts to process more complex tasks that involves the entire workspaces, for example. For simple tasks, Co-Pilot is the way to go.
 
-<img src="./docs/example1.png" with="400" />
+<img src="docs/example1.png" with="400" />
+
+See demo in this video:
+
+[<img src="docs/video1.png" width="400" />](https://youtu.be/WS_t1uMUmb0)
 
 ## Usage
 
