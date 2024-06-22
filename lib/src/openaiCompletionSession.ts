@@ -45,6 +45,8 @@ export const createOpenAICompletionSession = (
         if (!lastFinishReason) {
           conversation.push({ role: 'user', content: prompt });
         } else {
+          // TODO pass logger as parameter
+          // eslint-disable-next-line no-console
           console.log('Continuing response...');
           // conversation.push({ role: 'user', content: 'continue' });
         }
@@ -80,7 +82,6 @@ export const createOpenAICompletionSession = (
         lastFinishReason = response.choices[0].finish_reason;
 
         const completion = response.choices[0].message.content;
-        // console.log(JSON.stringify(response.choices[0], null, 2));
         if (completion) {
           // TODO alert: in some cases this corrupts file contents, but we don't know
           // how to deal with it in a better way as it seems that it stops in tokens and we can't know which is the separator of the token

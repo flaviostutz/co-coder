@@ -19,6 +19,7 @@ describe('createOpenAICompletionSession', () => {
           create: jest.fn(),
         },
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
     completionOptions = {
       openaiConfig: {

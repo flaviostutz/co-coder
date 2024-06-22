@@ -2,12 +2,7 @@
 module.exports = {
   testMatch: ['**/?(*.)+(spec|test).+(ts|tsx|js)'],
   transform: {
-    '^.+\\.(tsx?|json?)$': [
-      'esbuild-jest',
-      {
-        sourcemap: true, // correct line numbers in code coverage
-      },
-    ],
+    '^.+\\.(tsx?|json?)$': ['@swc/jest'],
   },
   coverageReporters: ['text'],
   collectCoverage: true,

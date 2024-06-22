@@ -6,6 +6,7 @@ import path from 'path';
 import { workspacePromptRunner } from './workspacePromptRunner';
 
 describe('workspacePromptRunner', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let openAIClient: any;
   let tempDir: string;
 
@@ -17,6 +18,7 @@ describe('workspacePromptRunner', () => {
           create: jest.fn(),
         },
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 
     // create a temporary directory with sample workspace files

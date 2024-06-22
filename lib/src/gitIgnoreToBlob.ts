@@ -24,6 +24,7 @@ export const gitIgnoreToBlob = (rootDir: string, currentDir: string): string[] =
 
   // eslint-disable-next-line no-constant-condition
   // find and merge all gitignore patterns from the current directory to the root directory
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     const gitIgnorePath = path.join(currentPath, '.gitignore');
 
