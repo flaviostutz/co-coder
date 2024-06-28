@@ -129,9 +129,9 @@ export const run = async (processArgs: string[]): Promise<number> => {
           })
           .option('max-file-requests', {
             alias: 'fr',
-            describe: 'Max number of times the model can request for additional files',
+            describe: 'Max number of additional files that can be sent to the model',
             type: 'number',
-            default: 2,
+            default: 10,
             demandOption: false,
           })
           .option('max-prompts', {
@@ -223,7 +223,7 @@ export const run = async (processArgs: string[]): Promise<number> => {
 };
 
 function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePromptRunnerArgs {
-  const baseDir = defaultValue(argv['base-dir'] as string, '.');
+  const baseDirArg = defaultValue(argv['base-dir'] as string, '.');
   const fullFiles = splitComma(defaultValue(argv.files as string, ''));
   const previewFiles = splitComma(defaultValue(argv.preview as string | undefined, undefined));
   const filesIgnore = splitComma(defaultValue(argv['files-ignore'] as string, ''));
@@ -242,12 +242,12 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
   const apiAuth = defaultValue(argv['api-auth'], 'apikey');
 
   const maxPrompts = defaultValue(argv['max-prompts'] as number, 20);
-  const maxFileRequests = defaultValue(argv['max-file-requests'] as number, 2);
+  const maxNumberOfRequestedFiles = defaultValue(argv['max-file-requests'] as number, 10);
   const maxFileSize = defaultValue(argv['max-file-size'] as number, 10000);
   const maxTokensTotal = defaultValue(argv['max-tokens-total'] as number, 6000);
   const maxTokensFiles = defaultValue(argv['max-tokens-files'] as number, 5000);
   const maxTokensPerRequest = defaultValue(argv['max-tokens-per-request'] as number, 128000);
-  const outputDir = defaultValue(argv.output as string, '.out');
+  const outputDirArg = defaultValue(argv.output as string, '.out');
   const progressLogLevel = defaultValue(argv.log as ProgressLogLevel, 'info');
 
   if (!task) {
@@ -308,6 +308,21 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
     throw new Error(`Invalid API provider: ${apiProvider}`);
   }
 
+  // convert relative paths to absolute
+  let baseDir = baseDirArg;
+  if (!path.isAbsolute(baseDir)) {
+    baseDir = path.resolve(process.cwd(), baseDir);
+  }
+  let outputDir = outputDirArg;
+  if (!path.isAbsolute(outputDir)) {
+    outputDir = path.resolve(process.cwd(), outputDir);
+  }
+
+  if (progressLogLevel === 'debug') {
+    console.log(`base-dir=${baseDir}`);
+    console.log(`output-dir=${outputDir}`);
+  }
+
   let previewContents;
   if (previewFiles) {
     previewContents = {
@@ -347,9 +362,9 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
       maxTokens: maxTokensFiles,
       useGitIgnore,
       ignoreFilePatterns: filesIgnore,
-      maxFileRequests,
+      maxNumberOfRequestedFiles,
     },
-    outputDir: path.join(process.cwd(), outputDir),
+    outputDir,
     progressLogLevel,
     progressLogFunc: console.log,
   };

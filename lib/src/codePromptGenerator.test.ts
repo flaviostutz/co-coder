@@ -28,7 +28,7 @@ describe('codePromptGenerator', () => {
     expect(output.fullFileContents?.filesProcessed.length).toBe(10);
     expect(output.previewFileContents).toBeUndefined();
     expect(output.codePrompt).toContain('## Instructions');
-    expect(output.codePrompt).toContain('Fix errors proactively');
+    expect(output.codePrompt).toContain('hasMoreToGenerate');
     files.forEach((file) => expect(output.codePrompt).toContain(`${file}`));
 
     files.forEach((file) => fs.unlinkSync(path.join(tempDir, file)));

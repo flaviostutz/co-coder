@@ -87,6 +87,7 @@ export type PromptProcessResult = {
   generatedFiles: string[];
   notes: string[];
   stats: SessionStats;
+  totalRequestedFiles: number;
 };
 
 /**
@@ -196,11 +197,11 @@ export type FileContentsLimits = {
    */
   maxTokens?: number;
   /**
-   * Max number of requests for additional files that can be made by the model
-   * If this limit is reached, we will ask the model to proceed without the additional files
-   * @default 2
+   * Max number of additional requested files that can be returned to the model
+   * If this limit is reached, no additional files are returned. If no file is returned, we will ask the model to proceed without the additional files
+   * @default 10
    */
-  maxFileRequests?: number;
+  maxNumberOfRequestedFiles?: number;
 };
 
 export type PromptFileContentsArgs = FileContentsLimits & {
@@ -215,6 +216,11 @@ export type PromptFileContentsArgs = FileContentsLimits & {
    * @required
    */
   filePatterns: string[];
+  /**
+   * Maximum number of files to be included in the prompt.
+   * @default 10
+   */
+  maxNumberOfFiles?: number;
 };
 
 export type PromptFileContentsResponse = {

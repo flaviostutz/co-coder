@@ -15,6 +15,9 @@ import { findAllGitIgnorePatterns } from './gitIgnoreToBlob';
  * @returns {PromptFileContentsResponse}
  */
 export const promptFileContents = (args: PromptFileContentsArgs): PromptFileContentsResponse => {
+  if (!path.isAbsolute(args.baseDir)) {
+    throw new Error(`baseDir (${args.baseDir}) must be an absolute path`);
+  }
   if (!fs.existsSync(args.baseDir)) {
     throw new Error(`Directory ${args.baseDir} does not exist`);
   }
@@ -27,6 +30,10 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
   }
   if (typeof maxTokens === 'undefined') {
     maxTokens = 50000;
+  }
+  let { maxNumberOfFiles } = args;
+  if (typeof maxNumberOfFiles === 'undefined') {
+    maxNumberOfFiles = 10;
   }
 
   const filesProcessed: string[] = [];
@@ -67,8 +74,12 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
 
     const filePrompt = `File ${relativePath}: \`\`\`${contents}\`\`\`\n\n`;
 
-    // use this file if we are within the token limit
-    if (isWithinTokenLimit(fileContentsPrompt + filePrompt, maxTokens)) {
+    if (
+      // use this file if we are within the token limit
+      isWithinTokenLimit(fileContentsPrompt + filePrompt, maxTokens) &&
+      // and number of files limit
+      i < maxNumberOfFiles
+    ) {
       filesProcessed.push(relativePath);
       fileContentsPrompt += filePrompt;
       // eslint-disable-next-line max-depth
@@ -78,8 +89,13 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
       // ignore this file if we reached the token limit
     } else {
       // TODO evolve logger lib and pass it as a parameter
-      // eslint-disable-next-line no-console
-      console.log(`Skipping file due to token limit (${maxTokens}): ${relativePath}`);
+      if (i >= maxNumberOfFiles) {
+        // eslint-disable-next-line no-console
+        console.log(`Skipping file due to max requested files limit: ${relativePath}`);
+      } else {
+        // eslint-disable-next-line no-console
+        console.log(`Skipping file due to token limit (${maxTokens}): ${relativePath}`);
+      }
       filesSkipped.push(relativePath);
     }
   }

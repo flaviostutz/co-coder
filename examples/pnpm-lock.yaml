@@ -1457,8 +1457,8 @@ packages:
     engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
     dev: true
 
-  /@eslint-community/regexpp@4.10.1:
-    resolution: {integrity: sha512-Zm2NGpWELsQAD1xsJzGQpYfvICSsFkEpU0jxBjfdC6uNEWXcHnfs9hScFWtXVDVl+rBQJGrl4g1vcKIejpH9dA==}
+  /@eslint-community/regexpp@4.11.0:
+    resolution: {integrity: sha512-G/M/tIiMrTAxEWRfLfQJMmGNX28IxBg4PBz8XqQhqUHLFI6TL2htpIB1iQCj144V5ee/JaKyT9/WZ0MGZWfA7A==}
     engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
     dev: true
 
@@ -2893,7 +2893,7 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@eslint-community/regexpp': 4.10.1
+      '@eslint-community/regexpp': 4.11.0
       '@typescript-eslint/parser': 5.62.0(eslint@8.57.0)(typescript@5.3.3)
       '@typescript-eslint/scope-manager': 5.62.0
       '@typescript-eslint/type-utils': 5.62.0(eslint@8.57.0)(typescript@5.3.3)
@@ -7365,10 +7365,9 @@ packages:
     dev: false
 
   file:../lib/dist/co-coder-0.0.1.tgz:
-    resolution: {integrity: sha512-9xmUpb6b7BHz9Dc3Isov57twAuZWrp9TpCt6TzSE0QrcdJ1S3aZT1Ot3U9D0E4jBF04HMHLI2gcoRevHChxA6w==, tarball: file:../lib/dist/co-coder-0.0.1.tgz}
+    resolution: {integrity: sha512-bhTN1+Iok4j9Qe0YHVtbVM3L/ZEL/8FUxZm5kFTA5cAI9OzRCtYR9iqiTaWHq8dol86UfSaMVd0OoHWHPYo9gw==, tarball: file:../lib/dist/co-coder-0.0.1.tgz}
     name: co-coder
     version: 0.0.1
-    engines: {node: 18.x, npm: <0, pnpm: '=8.15.7', yarn: <0}
     hasBin: true
     dependencies:
       '@azure/identity': 4.3.0

@@ -12,12 +12,6 @@
     "package.json",
     "README.md"
   ],
-  "engines": {
-    "npm": "<0",
-    "node": "18.x",
-    "yarn": "<0",
-    "pnpm": "=8.15.7"
-  },
   "packageManager": "pnpm@8.15.7",
   "scripts": {},
   "repository": {

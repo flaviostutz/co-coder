@@ -22,7 +22,7 @@ export const workspacePromptRunner = async (
   args: WorkspacePromptRunnerArgs,
 ): Promise<PromptProcessResult> => {
   // generate the code prompt with workspace files
-  debug(`Preparing workspace files...`, args.progressLogFunc, args.progressLogLevel);
+  info(`Preparing workspace files...`, args.progressLogFunc, args.progressLogLevel);
   const prompt = codePromptGenerator(args.codePromptGeneratorArgs);
   info(
     `Full content files: ${prompt.fullFileContents?.filesProcessed.length}`,
@@ -50,7 +50,7 @@ export const workspacePromptRunner = async (
   }
   if (prompt.fullFileContents && prompt.fullFileContents.filesSkipped.length > 0) {
     info(
-      `  ${prompt.fullFileContents?.filesTruncated.length} skipped (max token limit)`,
+      `  ${prompt.fullFileContents?.filesTruncated.length} skipped (max files/token limit)`,
       args.progressLogFunc,
       args.progressLogLevel,
     );
@@ -80,6 +80,12 @@ export const workspacePromptRunner = async (
     );
   }
 
+  if (!path.isAbsolute(requestedFilesDir)) {
+    throw new Error(
+      `fullContents.baseDir/previewContents.baseDir should be an absolute path. value="${requestedFilesDir}"`,
+    );
+  }
+
   return sendAndProcessWorkspacePrompt({
     prompt: prompt.codePrompt,
     requestedFilesDir,
@@ -94,6 +100,8 @@ export const workspacePromptRunner = async (
     requestedFilesLimits: {
       maxFileSize: args.codePromptGeneratorArgs.workspaceFiles.fullContents?.maxFileSize,
       maxTokens: args.codePromptGeneratorArgs.workspaceFiles.fullContents?.maxTokens,
+      useGitIgnore: args.codePromptGeneratorArgs.workspaceFiles.fullContents?.useGitIgnore,
+      maxNumberOfRequestedFiles: args.requestedFilesLimits.maxNumberOfRequestedFiles,
       ignoreFilePatterns:
         args.codePromptGeneratorArgs.workspaceFiles.fullContents?.ignoreFilePatterns,
     },
@@ -119,11 +127,9 @@ const sendAndProcessWorkspacePrompt = async (
         sessionInputTokens: 0,
         sessionOutputTokens: 0,
       },
+      totalRequestedFiles: 0,
     };
   }
-
-  // track how many times additional files were requested
-  let additionalFilesCounter = 0;
 
   let chatSession = args.openAICompletionSession;
 
@@ -260,43 +266,44 @@ ${output.response}`,
     }
 
     let prompt = '';
-    additionalFilesCounter += 1;
 
-    const maxFileRequests = defaultValue(args.requestedFilesLimits.maxFileRequests, 2);
+    const maxNumberOfRequestedFiles = defaultValue(
+      args.requestedFilesLimits.maxNumberOfRequestedFiles,
+      10,
+    );
 
-    if (additionalFilesCounter > maxFileRequests) {
-      info(
-        `Max number of file requests reached, proceeding without additional files`,
-        args.progressLogFunc,
-        args.progressLogLevel,
-      );
-    } else {
-      const filePatterns = promptOutput.contents
-        // .filter((content) => content.relevance && content.relevance >= 5)
-        .map((content) => content.filename);
+    const filePatterns = promptOutput.contents
+      // .filter((content) => content.relevance && content.relevance >= 5)
+      .map((content) => content.filename);
 
-      const requestedFilesPrompt = promptFileContents({
-        baseDir: args.requestedFilesDir,
-        filePatterns,
-        ...args.requestedFilesLimits,
-      });
+    const maxNumberOfFiles = maxNumberOfRequestedFiles - selfOutput.totalRequestedFiles;
 
-      const missingFiles = promptOutput.contents.filter(
-        (item) => !requestedFilesPrompt.filesProcessed.includes(item.filename),
-      );
+    const requestedFilesPrompt = promptFileContents({
+      baseDir: args.requestedFilesDir,
+      filePatterns,
+      maxNumberOfFiles,
+      ...args.requestedFilesLimits,
+    });
 
-      info(
-        `Files provided: ${requestedFilesPrompt.filesProcessed.length}`,
-        args.progressLogFunc,
-        args.progressLogLevel,
-      );
-      for (let i = 0; i < missingFiles.length; i += 1) {
-        const file = missingFiles[i];
-        debug(`  !${file.filename}`, args.progressLogFunc, args.progressLogLevel);
-      }
+    // add requested files counter to global total
+    selfOutput.totalRequestedFiles += requestedFilesPrompt.filesProcessed.length;
 
-      prompt = requestedFilesPrompt.fileContentsPrompt;
+    const missingFiles = promptOutput.contents.filter(
+      (item) => !requestedFilesPrompt.filesProcessed.includes(item.filename),
+    );
+
+    info(
+      `Files provided: ${requestedFilesPrompt.filesProcessed.length}`,
+      args.progressLogFunc,
+      args.progressLogLevel,
+    );
+
+    for (let i = 0; i < missingFiles.length; i += 1) {
+      const file = missingFiles[i];
+      debug(`  !${file.filename}`, args.progressLogFunc, args.progressLogLevel);
     }
+
+    prompt = requestedFilesPrompt.fileContentsPrompt;
 
     // if no files were provided or if the max number of requests were reached, proceed without additional files
     if (!prompt) {

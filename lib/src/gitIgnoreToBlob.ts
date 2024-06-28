@@ -11,8 +11,16 @@ import fg from 'fast-glob';
  * @returns List of absolute gitignore patterns to ignore
  */
 export const gitIgnoreToBlob = (rootDir: string, currentDir: string): string[] => {
+  if (!path.isAbsolute(rootDir)) {
+    throw new Error(`rootDir (${rootDir}) must be an absolute path`);
+  }
+  if (!path.isAbsolute(currentDir)) {
+    throw new Error(`currentDir (${currentDir}) must be an absolute path`);
+  }
   if (currentDir.indexOf(rootDir) === -1) {
-    throw new Error('currentDir is not a subdirectory of the root directory');
+    throw new Error(
+      `currentDir (${currentDir}) is not a subdirectory of the root directory (${rootDir})`,
+    );
   }
   const stat = fs.statSync(currentDir);
   if (!stat.isDirectory()) {

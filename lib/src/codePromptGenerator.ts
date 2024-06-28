@@ -54,7 +54,7 @@ CONTENT_END (size={content length}; md5="{md5 hash hex for contents}")')
 * If source code was generated set outcome to "files-generated" and generate the file contents with source codes
 * If asking for more files, set outcome to "files-requested" and generate the list of requested files with motivation and relevance
 * If notes are generated, but no source code, set outcome to "notes-generated" and add create one CONTENT per note with the note contents
-* If you have more files that could be generated, set "hasMoreToGenerate" to true in footer. Otherwise, set it to false
+* If you have more files that could be generated in order to make the solution more complete, set "hasMoreToGenerate" to true in footer. Otherwise, set it to false
 
 ## Context
 
@@ -74,9 +74,6 @@ CONTENT_END (size={content length}; md5="{md5 hash hex for contents}")')
 * Understand the structure of the project and used technological stack before starting to generate code. When analyzing the task, always use all the files in Workspace to have insights on how to solve the problem.
 * Communicate well what you are doing by using comments so other developers can easily maintain and debug the code you are generating
 * Look for additional instructions on markup files and ts-docs found in Workspace
-* Fix errors proactively
-* Prioritize tasks, completing one file before starting another
-* Don't use "placeholders for actual implementation" or "TODOs". Do implement everything needed to have a complete working solution
 * Develop everything necessary to have a complete working solution. Ask for additional files from the workspace if needed. Output notes with requests for information.
 
 #### Coding style

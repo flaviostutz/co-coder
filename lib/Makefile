@@ -43,7 +43,7 @@ run-example-azure:
 		--output .out \
 		--max-tokens-total 200000 \
 		--max-tokens-files 128000 \
-		--max-file-requests 5 \
+		--max-file-requests 1 \
 		--max-file-size 50000 \
 		--log debug \
 		--api-provider azure \

@@ -86,4 +86,27 @@ describe('describeWorkspace', () => {
     fs.unlinkSync(smallFile);
     fs.rmdirSync(tempDir);
   });
+
+  it('should skip files if we exceed max number of files', () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'test-'));
+    const largeFile = path.join(tempDir, 'largeFile.txt');
+    const smallFile = path.join(tempDir, 'smallFile.txt');
+
+    fs.writeFileSync(largeFile, 'a'.repeat(4000));
+    fs.writeFileSync(smallFile, 'a'.repeat(4000));
+
+    const output = promptFileContents({
+      baseDir: tempDir,
+      filePatterns: ['*.txt'],
+      maxTokens: 30000,
+      maxNumberOfFiles: 1,
+    });
+
+    expect(output.filesProcessed.length).toBe(1);
+    expect(output.filesSkipped.length).toBe(1);
+
+    fs.unlinkSync(largeFile);
+    fs.unlinkSync(smallFile);
+    fs.rmdirSync(tempDir);
+  });
 });
