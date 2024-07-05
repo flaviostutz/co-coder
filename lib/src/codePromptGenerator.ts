@@ -1,35 +1,58 @@
 import { promptFileContents } from './promptFileContents';
-import { CodePromptGeneratorArgs, CodePromptGeneratorResponse } from './types';
+import { PromptGeneratorArgs, CodePromptGeneratorResponse } from './types';
 
 /**
  * Generate a code prompt to be sent to OpenAI API
  * This will get a base task description and add a bunch of other instructions to the prompt that is sent to OpenAI API
  * in order to generate code based on the task description.
- * @param args {CodePromptGeneratorArgs}
+ * @param firstPrompt {boolean} If true, prompt basic file input/output instructions, expected behaviors and general instructions that are not necessary on subsequent prompts
+ * @param args {PromptGeneratorArgs}
  * @returns {string} Model prompt tailored for generating code
  */
-export const codePromptGenerator = (args: CodePromptGeneratorArgs): CodePromptGeneratorResponse => {
+export const codePromptGenerator = (
+  firstPrompt: boolean,
+  args: PromptGeneratorArgs,
+): CodePromptGeneratorResponse => {
   // generate prompt contents for workspace files
   let fullFileContents;
-  if (args.workspaceFiles.fullContents) {
+  if (args.workspaceFiles?.fullContents) {
     fullFileContents = promptFileContents(args.workspaceFiles.fullContents);
   }
 
   let previewFileContents;
-  if (args.workspaceFiles.previewContents) {
-    previewFileContents = promptFileContents(args.workspaceFiles.previewContents);
+  if (args.workspaceFiles?.previewContents) {
+    previewFileContents = promptFileContents(args.workspaceFiles?.previewContents);
   }
 
-  if (!args.taskDescription) {
-    throw new Error('taskDescription should be non empty');
+  if (!args.task) {
+    throw new Error('task should be non empty');
   }
 
-  const codePrompt = `
+  const inputDataTemplate = `
+## Input Data
+
+* For handling input files, look for the pattern "File [file name with relative path]: \`\`\`[file contents]\`\`\`"
+
+### Workspace files
+
+### Full content files
+
+* This is the workspace where the developer works and where the source code of our system resides. All generated files should be located in this structure
+
+${checkValidString(fullFileContents?.fileContentsPrompt, 'No files')}
+
+#### File previews
+
+${checkValidString(previewFileContents?.fileContentsPrompt, 'No files')}
+`;
+
+  // code prompt for first prompts (full instructions)
+  const fullCodePrompt = `
   ## Instructions
 
   ### Task
 
-${args.taskDescription}
+${args.task}
   
   ### Approach (THIS IS VERY IMPORTANT TO FOLLOW)
   
@@ -39,7 +62,7 @@ ${args.taskDescription}
 
   3. Keep asking for additional files until you have everything you need to generate the response files. In that case, answer with the list of files ordered by relevance (most relevant first). Only request files that you didn't receive yet and limit this list to the 30 most important files.
 
-  4. After you finish analyzing the whole task with all necessary files, generate the resulting files according to "Output Indicator" sectio without asking for any permission. Order the file generation according to the least dependant file to the most dependant file. Generate the files in this order.
+  4. After you finish analyzing the whole task with all necessary files, generate the resulting files according to "Output Indicator" section without asking for any permission. Order the file generation according to the least dependant file to the most dependant file. Generate the files in this order.
 
 ## Output Indicator (THIS IS VERY IMPORTANT TO FOLLOW)
 
@@ -51,15 +74,16 @@ CONTENT_END (size={content length}; md5="{md5 hash hex for contents}")')
 * When continuing a response, don't skip or repeat any characters
 * After generating all contents, end response with 'FOOTER (hasMoreToGenerate={true or false})'
 
-* If source code was generated set outcome to "files-generated" and generate the file contents with source codes
+* If source code or files were generated set outcome to "files-generated" and generate the file contents
 * If asking for more files, set outcome to "files-requested" and generate the list of requested files with motivation and relevance
-* If notes are generated, but no source code, set outcome to "notes-generated" and add create one CONTENT per note with the note contents
+* If notes are generated, but no source codes or files, set outcome to "notes-generated" and add create one CONTENT per note with the note contents
 * If you have more files that could be generated in order to make the solution more complete, set "hasMoreToGenerate" to true in footer. Otherwise, set it to false
 
 ## Context
 
 ### General instructions
 
+* We call it "workspace" a collection of folders and files that contains the source code or generic files used in a project
 * Act as a senior developer that is very good at design, maintaining projects structures and communicating your decisions via comments
 * Ignore comments in this prompt that are marked as markdown comments (e.g.: <!-- this is a comment -->)
 * Be precise and tell when you don't know how to do something.
@@ -70,7 +94,6 @@ CONTENT_END (size={content length}; md5="{md5 hash hex for contents}")')
 
 ### Coding instructions
 
-* We call it "workspace" a collection of folders and files that contains the source code of an application
 * Understand the structure of the project and used technological stack before starting to generate code. When analyzing the task, always use all the files in Workspace to have insights on how to solve the problem.
 * Communicate well what you are doing by using comments so other developers can easily maintain and debug the code you are generating
 * Look for additional instructions on markup files and ts-docs found in Workspace
@@ -94,17 +117,7 @@ CONTENT_END (size={content length}; md5="{md5 hash hex for contents}")')
 
 ${checkValidString(args.projectInformation, 'No specific project information')}
 
-## Input Data
-
-* For handling input files, look for the pattern "File [file name with relative path]: \`\`\`[file contents]\`\`\`"
-
-### Workspace files
-
-### Full content files
-
-* This is the workspace where the developer works and where the source code of our system resides. All generated files should be located in this structure
-
-${checkValidString(fullFileContents?.fileContentsPrompt, 'No files')}
+${inputDataTemplate}
 
 #### File previews
 
@@ -116,11 +129,15 @@ ${checkValidString(
   args.example,
   'Do a best effort to generate code based on the structure and examples present in workspace files',
 )}
-
 `;
 
+  // code prompt for subsequent prompts (only task + input data)
+  const secondPrompt = `${args.task}
+
+${inputDataTemplate}`;
+
   return {
-    codePrompt,
+    codePrompt: firstPrompt ? fullCodePrompt : secondPrompt,
     fullFileContents,
     previewFileContents,
   };

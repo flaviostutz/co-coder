@@ -1,11 +1,14 @@
 /* eslint-disable camelcase */
+import fs from 'fs';
+import path from 'path';
+
 import { encode, isWithinTokenLimit } from 'gpt-tokenizer';
 import { OpenAI } from 'openai';
 
 import {
   CompletionOptions,
-  OpenAICompletionSession,
   Message,
+  OpenAICompletionSession,
   SendPromptResponse,
   SessionStats,
 } from './types';
@@ -15,7 +18,8 @@ export const createOpenAICompletionSession = (
   openaiClient: OpenAI,
   completionOptions: CompletionOptions,
 ): OpenAICompletionSession => {
-  const conversation: Message[] = [
+  // start new conversation
+  let conversation: Message[] = [
     { role: 'system', content: 'You are an AI assistant that helps people find information.' },
   ];
   let promptCounter = 0;
@@ -75,7 +79,7 @@ export const createOpenAICompletionSession = (
         // eslint-disable-next-line no-await-in-loop
         const response = await openaiClient.chat.completions.create({
           ...completionOptions.openaiConfig,
-          messages: conversation,
+          messages: [...conversation], // cloning is used so we can test "toHaveBeenCalledWith" with the correct data
           stream: false,
         });
 
@@ -118,6 +122,23 @@ export const createOpenAICompletionSession = (
         sessionInputTokens,
         sessionOutputTokens,
       };
+    },
+    saveConversation: (file: string): void => {
+      const data = JSON.stringify(conversation, null, 2);
+      console.log(`>>>>>${data}`);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, data, 'utf8');
+    },
+    loadConversation: (file: string): void => {
+      // load existing conversation from file
+      if (!fs.existsSync(file)) {
+        throw new Error(`conversationFile "${file}" doesn't exist`);
+      }
+      const data = fs.readFileSync(file, 'utf8');
+      conversation = JSON.parse(data);
+    },
+    getConversation: (): Message[] => {
+      return conversation;
     },
   };
 };

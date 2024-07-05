@@ -56,8 +56,8 @@ FOOTER (hasMoreToGenerate=false)`,
     });
 
     const result = await workspacePromptRunner({
-      codePromptGeneratorArgs: {
-        taskDescription: prompt,
+      promptGenerator: {
+        task: prompt,
         workspaceFiles: {
           fullContents: {
             baseDir: tempDir,
@@ -66,6 +66,7 @@ FOOTER (hasMoreToGenerate=false)`,
         },
         example: 'Use all files in the workspace as an example.',
       },
+      requestedFilesDir: tempDir,
       openAIClient,
       model: 'gpt-3.5-turbo',
       outputDir: tempDir,
@@ -84,6 +85,97 @@ FOOTER (hasMoreToGenerate=false)`,
     expect(newCodeContents).toBe('THIS IS A NEW CODE!!');
 
     expect(result.generatedFiles[0]).toBe(path.join(tempDir, 'new-code.txt'));
+  });
+
+  it('should generate code and save conversation to file', async () => {
+    const prompt = 'This is a sample prompt.';
+    const conversationFile = path.join(tempDir, 'conversationtest.json');
+
+    // INVOKE FOR THE FIRST TIME, CREATING A NEW CONVERSATION FILE
+    // first answer with generated code (file new-code.txt)
+    openAIClient.chat.completions.create.mockResolvedValueOnce({
+      id: 'test-id',
+      object: 'chat.completion',
+      created: 1234567890,
+      model: 'gpt-3.5-turbo',
+      usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
+      choices: [
+        {
+          message: {
+            role: 'assistant',
+            content: `HEADER (outcome="files-generated"; count=1)
+CONTENT_START (filename="new-code.txt"; relevance=10; motivation="example")
+THIS IS A NEW CODE!!
+CONTENT_END (size=20; md5="f4b80d72")
+FOOTER (hasMoreToGenerate=false)`,
+          },
+          finish_reason: 'stop',
+        },
+      ],
+    });
+
+    await workspacePromptRunner({
+      promptGenerator: {
+        task: prompt,
+        workspaceFiles: {
+          fullContents: {
+            baseDir: tempDir,
+            filePatterns: ['file1.txt', 'file2.txt'],
+          },
+        },
+        example: 'Use all files in the workspace as an example.',
+      },
+      requestedFilesDir: tempDir,
+      openAIClient,
+      model: 'gpt-3.5-turbo',
+      outputDir: tempDir,
+      conversationFile,
+    });
+
+    // check if conversation file was created
+    const conversationFileContents = fs.readFileSync(conversationFile, 'utf-8');
+    expect(conversationFileContents).toContain(`Don't generate any codes until`);
+
+    // INVOKE FOR THE SECOND TIME REUSING EXISTING CONVERSATION FILE
+    // second answer with generated code (file new-code2.txt)
+    openAIClient.chat.completions.create.mockResolvedValueOnce({
+      id: 'test-id',
+      object: 'chat.completion',
+      created: 1234567890,
+      model: 'gpt-3.5-turbo',
+      usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
+      choices: [
+        {
+          message: {
+            role: 'assistant',
+            content: `HEADER (outcome="files-generated"; count=1)
+CONTENT_START (filename="new-code2.txt"; relevance=10; motivation="example")
+THIS IS A NEW CODE2!!
+CONTENT_END (size=20; md5="f4b80d72")
+FOOTER (hasMoreToGenerate=false)`,
+          },
+          finish_reason: 'stop',
+        },
+      ],
+    });
+
+    await workspacePromptRunner({
+      promptGenerator: {
+        task: 'generate new-code2.txt because you forgot it',
+      },
+      requestedFilesDir: tempDir,
+      openAIClient,
+      model: 'gpt-3.5-turbo',
+      outputDir: tempDir,
+      conversationFile,
+    });
+
+    const newCodeContents2 = fs.readFileSync(path.join(tempDir, 'new-code2.txt'), 'utf-8');
+    expect(newCodeContents2).toBe('THIS IS A NEW CODE2!!');
+
+    const fileContents = fs.readFileSync(conversationFile, 'utf-8');
+    const conversationFileObj = JSON.parse(fileContents);
+    expect(conversationFileObj).toHaveLength(5);
   });
 
   it('should run a prompt using workspacePromptRunner()', async () => {
@@ -111,8 +203,8 @@ FOOTER (hasMoreToGenerate=false)`,
     });
 
     const result = await workspacePromptRunner({
-      codePromptGeneratorArgs: {
-        taskDescription: prompt,
+      promptGenerator: {
+        task: prompt,
         workspaceFiles: {
           fullContents: {
             baseDir: tempDir,
@@ -122,6 +214,7 @@ FOOTER (hasMoreToGenerate=false)`,
         example: 'Use all files in the workspace as an example.',
         projectInformation: '',
       },
+      requestedFilesDir: tempDir,
       openAIClient,
       model: 'gpt-3.5-turbo',
       outputDir: tempDir,
@@ -209,8 +302,8 @@ FOOTER (hasMoreToGenerate=false)`,
     });
 
     const result = await workspacePromptRunner({
-      codePromptGeneratorArgs: {
-        taskDescription: prompt,
+      promptGenerator: {
+        task: prompt,
         workspaceFiles: {
           fullContents: {
             baseDir: tempDir,
@@ -223,16 +316,12 @@ FOOTER (hasMoreToGenerate=false)`,
         },
         example: 'Use all files in the workspace as an example.',
       },
+      requestedFilesDir: tempDir,
       openAIClient,
       model: 'gpt-3.5-turbo-0125',
       outputDir: tempDir,
       progressLogLevel: 'trace',
       progressLogFunc: jest.fn(),
-      requestedFilesLimits: {
-        maxFileSize: 10000,
-        maxTokens: 5000,
-        ignoreFilePatterns: [],
-      },
     });
 
     expect(result.stats.promptCounter).toBe(3);
@@ -264,8 +353,8 @@ FOOTER (hasMoreToGenerate=false)`,
     });
 
     const result = await workspacePromptRunner({
-      codePromptGeneratorArgs: {
-        taskDescription: prompt,
+      promptGenerator: {
+        task: prompt,
         workspaceFiles: {
           fullContents: {
             baseDir: tempDir,
@@ -274,6 +363,7 @@ FOOTER (hasMoreToGenerate=false)`,
         },
         example: 'Use all files in the workspace as an example.',
       },
+      requestedFilesDir: tempDir,
       openAIClient,
       model: 'gpt-3.5-turbo',
       outputDir: tempDir,

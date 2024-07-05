@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 
 import { codePromptGenerator } from './codePromptGenerator';
-import { CodePromptGeneratorArgs } from './types';
+import { PromptGeneratorArgs } from './types';
 
 describe('codePromptGenerator', () => {
   it('should correctly generate a code prompt', () => {
@@ -11,8 +11,8 @@ describe('codePromptGenerator', () => {
     const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
     files.forEach((file) => fs.writeFileSync(path.join(tempDir, file), `This is ${file}`));
 
-    const args: CodePromptGeneratorArgs = {
-      taskDescription: 'Test instructions',
+    const args: PromptGeneratorArgs = {
+      task: 'Test instructions',
       projectInformation: 'Test project information',
       workspaceFiles: {
         fullContents: {
@@ -23,7 +23,7 @@ describe('codePromptGenerator', () => {
       example: 'Test example',
     };
 
-    const output = codePromptGenerator(args);
+    const output = codePromptGenerator(true, args);
 
     expect(output.fullFileContents?.filesProcessed.length).toBe(10);
     expect(output.previewFileContents).toBeUndefined();

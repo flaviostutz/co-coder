@@ -4,6 +4,14 @@ import { ProgressLogFunc, ProgressLogLevel } from './progressLog';
 
 export type Role = 'system' | 'user' | 'assistant';
 
+export type OpenAICompletionSession = {
+  saveConversation: (file: string) => void;
+  loadConversation: (file: string) => void;
+  sendPrompt: (prompt: string) => Promise<SendPromptResponse>;
+  stats: () => SessionStats;
+  getConversation: () => Message[];
+};
+
 export type SessionStats = {
   promptCounter: number;
   sessionInputTokens: number;
@@ -13,11 +21,6 @@ export type SessionStats = {
 export type Message = {
   role: Role;
   content: string;
-};
-
-export type OpenAICompletionSession = {
-  sendPrompt: (prompt: string) => Promise<SendPromptResponse>;
-  stats: () => SessionStats;
 };
 
 export type SendPromptResponse = {
@@ -138,17 +141,28 @@ export type SendAndProcessPromptArgs = {
    * If defined, "model" param is ignored.
    * If not provided, a new session will be created using the "model" parameter.
    */
-  openAICompletionSession?: OpenAICompletionSession;
+  openAICompletionSession: OpenAICompletionSession;
   /**
    * Define this function to receive logs as the prompt is being processed
    */
   progressLogFunc?: ProgressLogFunc;
   /**
+   * File to be used to store the conversation history
+   * If the file exists, it will be used as the starting point for sending the next "task" to the model over an existing conversation
+   * If it doesn't exist, a new conversation will be started
+   */
+  conversationFile?: string;
+  /**
+   * Whether to save the conversation history to conversation file
+   */
+  conversationSave?: boolean;
+
+  /**
    * Define the log level for the progress log
    * @default 'info'
    */
   progressLogLevel?: ProgressLogLevel;
-  requestedFilesLimits: FileContentsLimits;
+  requestedFilesLimits?: FileContentsLimits;
 };
 
 /**
@@ -165,11 +179,14 @@ export type WorkspacePromptRunnerArgs = Pick<
   | 'progressLogLevel'
   | 'requestedFilesLimits'
   | 'maxPrompts'
+  | 'conversationFile'
+  | 'conversationSave'
+  | 'requestedFilesDir'
 > & {
   /**
    * Arguments for generating the code prompt
    */
-  codePromptGeneratorArgs: CodePromptGeneratorArgs;
+  promptGenerator: PromptGeneratorArgs;
 };
 
 export type FileContentsLimits = {
@@ -247,13 +264,13 @@ export type PromptFileContentsResponse = {
 /**
  * Arguments for generating a code prompt
  */
-export type CodePromptGeneratorArgs = {
+export type PromptGeneratorArgs = {
   /**
    * Description of the task to be performed. It will be added to the prompt as the main task that must be performed by the model.
    * A bunch of other instructions will be added besides this task to the prompt that is sent to OpenAI API
    * @required
    */
-  taskDescription: string;
+  task: string;
   /**
    * Information about the project that the task is related to. It will be added to the prompt as the context of the task.
    * Add here informations such as the project's purpose, the technologies used, the structure of the project, etc.
@@ -265,7 +282,7 @@ export type CodePromptGeneratorArgs = {
    * It will use these files to understand the structure of the project, technologies used and other informations that can help to generate the code.
    * @required
    */
-  workspaceFiles: {
+  workspaceFiles?: {
     fullContents?: PromptFileContentsArgs;
     previewContents?: PromptFileContentsArgs;
   };
