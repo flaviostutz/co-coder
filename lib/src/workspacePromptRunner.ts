@@ -61,7 +61,7 @@ export const workspacePromptRunner = async (
   const prompt = codePromptGenerator(firstPrompt, args.promptGenerator);
   logResults(prompt, args);
 
-  const runResults = sendAndProcessWorkspacePrompt({
+  const runResults = await sendAndProcessWorkspacePrompt({
     ...args,
     prompt: prompt.codePrompt,
     requestedFilesDir,

@@ -20,6 +20,9 @@ export const sendAndProcessWorkspacePrompt = async (
   args: SendAndProcessPromptArgs,
   globalResult?: PromptProcessResult,
 ): Promise<PromptProcessResult> => {
+  if (!args.openAICompletionSession) {
+    throw new Error('openAICompletionSession is required');
+  }
   let selfOutput = globalResult;
   // initialize output on first call
   if (!selfOutput) {
@@ -35,8 +38,6 @@ export const sendAndProcessWorkspacePrompt = async (
     };
   }
 
-  const chatSession = args.openAICompletionSession;
-
   info('Sending prompt to model...', args.progressLogFunc, args.progressLogLevel);
   trace(
     `Prompt: 
@@ -44,7 +45,7 @@ export const sendAndProcessWorkspacePrompt = async (
     args.progressLogFunc,
     args.progressLogLevel,
   );
-  const output = await chatSession.sendPrompt(args.prompt);
+  const output = await args.openAICompletionSession.sendPrompt(args.prompt);
 
   trace(
     `Response:
@@ -125,7 +126,6 @@ export const sendAndProcessWorkspacePrompt = async (
       selfOutput = await sendAndProcessWorkspacePrompt(
         {
           ...args,
-          openAICompletionSession: chatSession,
           prompt:
             'generate additional files or source codes. update already generated files if needed.',
         },
@@ -202,7 +202,6 @@ export const sendAndProcessWorkspacePrompt = async (
     selfOutput = await sendAndProcessWorkspacePrompt(
       {
         ...args,
-        openAICompletionSession: chatSession,
         prompt,
       },
       selfOutput,
@@ -216,7 +215,7 @@ export const sendAndProcessWorkspacePrompt = async (
     throw new Error(`Unexpected outcome: ${promptOutput.header.outcome}`);
   }
 
-  const stats = chatSession.stats();
+  const stats = args.openAICompletionSession.stats();
   selfOutput.stats = stats;
 
   info(`Workspace prompt completed`, args.progressLogFunc, args.progressLogLevel);

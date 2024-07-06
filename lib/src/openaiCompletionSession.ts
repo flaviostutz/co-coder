@@ -125,7 +125,7 @@ export const createOpenAICompletionSession = (
     },
     saveConversation: (file: string): void => {
       const data = JSON.stringify(conversation, null, 2);
-      console.log(`>>>>>${data}`);
+      // console.log(`>>>>>${data}`);
       fs.mkdirSync(path.dirname(file), { recursive: true });
       fs.writeFileSync(file, data, 'utf8');
     },
