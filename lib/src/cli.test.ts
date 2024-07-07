@@ -20,7 +20,7 @@ mockWorkspacePromptRunner.mockImplementation(
         sessionOutputTokens: 10,
       },
       notes: ['test'],
-    } as PromptProcessResult),
+    }) as PromptProcessResult,
 );
 
 let tempDir: string;

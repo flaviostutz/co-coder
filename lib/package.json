@@ -26,7 +26,7 @@
   "homepage": "https://github.com/flaviostutz/co-coder#readme",
   "devDependencies": {
     "@babel/preset-typescript": "^7.21.0",
-    "@stutzlab/eslint-config": "^3.0.4",
+    "@stutzlab/eslint-config": "^3.1.1",
     "@tsconfig/node16": "16.1.1",
     "@types/jest": "^29.4.0",
     "@types/node": "18.11.18",

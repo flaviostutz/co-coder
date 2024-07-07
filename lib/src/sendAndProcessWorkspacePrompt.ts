@@ -232,8 +232,8 @@ export const sendAndProcessWorkspacePrompt = async (
   debug(
     ` ${stats.promptCounter} api invocations
    ${stats.sessionInputTokens + stats.sessionInputTokens} tokens total (in: ${
-      stats.sessionInputTokens
-    }, out: ${stats.sessionOutputTokens})`,
+     stats.sessionInputTokens
+   }, out: ${stats.sessionOutputTokens})`,
     args.progressLogFunc,
     args.progressLogLevel,
   );
