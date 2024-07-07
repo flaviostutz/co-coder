@@ -59,7 +59,11 @@ export const run = async (processArgs: string[]): Promise<number> => {
     console.log(`${result.generatedFiles.length} files generated`);
     for (let i = 0; i < result.generatedFiles.length; i += 1) {
       const gfile = result.generatedFiles[i];
-      console.log(` - ${gfile}`);
+      const gfileSimplified = `${path.basename(params.outputDir)}${gfile.replace(
+        params.outputDir,
+        '',
+      )}`;
+      console.log(` - ${gfileSimplified}`);
     }
     console.log(``);
   }
