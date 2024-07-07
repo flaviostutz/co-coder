@@ -28,9 +28,16 @@ export const workspacePromptRunner = async (
   if (!requestedFilesDir) {
     throw new Error(`'requestedFilesDir' is required`);
   }
-
   if (!path.isAbsolute(requestedFilesDir)) {
     throw new Error(`'requestedFilesDir' should be an absolute path. value="${requestedFilesDir}"`);
+  }
+
+  if (args.conversationFile) {
+    if (!path.isAbsolute(args.conversationFile)) {
+      throw new Error(
+        `'args.conversationFile' should be an absolute path. value="${args.conversationFile}"`,
+      );
+    }
   }
 
   // completion session
@@ -52,7 +59,13 @@ export const workspacePromptRunner = async (
     if (fs.existsSync(args.conversationFile)) {
       openAICompletionSession.loadConversation(args.conversationFile);
       firstPrompt = false;
-      info(`Continuing previous conversation`);
+      info(
+        `Continuing previous conversation (size: ${
+          openAICompletionSession.getConversation().length
+        })`,
+        args.progressLogFunc,
+        args.progressLogLevel,
+      );
     }
   }
 
@@ -81,7 +94,11 @@ export const workspacePromptRunner = async (
     if (!path.isAbsolute(conversationFile)) {
       conversationFile = path.join(args.outputDir, args.conversationFile);
     }
-    info(`Saving conversation to ${conversationFile}`, args.progressLogFunc, args.progressLogLevel);
+    info(
+      `Saving conversation to ${conversationFile.replace(args.outputDir, '')}`,
+      args.progressLogFunc,
+      args.progressLogLevel,
+    );
     openAICompletionSession.saveConversation(conversationFile);
   }
 

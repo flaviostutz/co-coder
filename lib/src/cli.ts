@@ -99,7 +99,10 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
   const projectInformation = defaultValue(argv.info as string | undefined, undefined);
   const example = defaultValue(argv.example, undefined) as string | undefined;
 
-  const conversationFile = defaultValue(argv['conversation-file'] as string | undefined, undefined);
+  const conversationFileArg = defaultValue(
+    argv['conversation-file'] as string | undefined,
+    undefined,
+  );
   const conversationSave = defaultValue(argv['conversation-save'] as boolean, true);
 
   // common checks
@@ -130,6 +133,13 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
   let outputDir = outputDirArg;
   if (!path.isAbsolute(outputDir)) {
     outputDir = path.resolve(process.cwd(), outputDir);
+  }
+
+  let conversationFile = conversationFileArg;
+  if (conversationFile) {
+    if (!path.isAbsolute(conversationFile)) {
+      conversationFile = path.resolve(outputDir, conversationFile);
+    }
   }
 
   if (progressLogLevel === 'debug') {
@@ -191,7 +201,7 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
 
   const args: WorkspacePromptRunnerArgs = {
     promptGenerator: {
-      task: task,
+      task,
       workspaceFiles: {
         fullContents: {
           baseDir,
@@ -218,6 +228,7 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
       ignoreFilePatterns: filesIgnore,
       maxNumberOfRequestedFiles,
     },
+    requestedFilesDir: baseDir,
     outputDir,
     progressLogLevel,
     conversationFile,

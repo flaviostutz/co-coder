@@ -15,4 +15,5 @@ SHELL := /bin/bash
 publish:
 	cd lib; make publish
 
-
+all-dev:
+	STAGE=dev make build lint test

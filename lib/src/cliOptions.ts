@@ -57,6 +57,22 @@ export const cliOptions = (y: Argv): Argv => {
       default: '.out',
       demandOption: false,
     })
+    .option('conversation-file', {
+      alias: 'cf',
+      describe:
+        'File to save conversation history to. Maybe be a relative path (to output dir), or absolute',
+      type: 'string',
+      default: '',
+      demandOption: false,
+    })
+    .option('conversation-save', {
+      alias: 'cs',
+      describe:
+        'If conversation-file is defined, save the history or not. Defaults to true. If false, it will only load the conversation history from the file, but not save it back after the prompts are run',
+      type: 'boolean',
+      default: '',
+      demandOption: false,
+    })
     .option('max-tokens-total', {
       alias: 'tt',
       describe: 'Max number of tokens allowed to be used in total for the task',

@@ -1,21 +1,26 @@
 SHELL := /bin/bash
 
 generate-new-service:
-	rm -rf .out
-	pnpm dlx co-coder run \
+	@if [ ! -f ".out/conversation.json" ]; then \
+		rm -rf .out; \
+	fi
+	node_modules/.bin/co-coder run \
 		--task "Create a new service called 'deleteTodo' in apigateway module creating all openapi defs along with handlers, connectors and all boilerplace code for it in the correct places. Create a sample interface for this service as a starting point." \
 		--example "Use getTodo for a sample project structure" \
 		--info "This workspace is a monorepo with lots of different services and libraries reused among the packages. Each service has a CDK code, Lambda logic and a connector for other clients to connect to it." \
 		--base-dir "." \
 		--files "src/apigateway/handlers/http/getTodo/**/*.ts,src/apigateway/cdk.ts" \
 		--model gpt-4-turbo \
+		--conversation-file "conversation.json" \
 		--output .out \
 		--max-tokens-total 50000 \
 		--log debug \
 		--api-key "$$(security find-generic-password -w -a flaviostutz -s flaviostutz-openai-apikey)"
 
 generate-services-from-wsdl:
-	rm -rf .out
+	@if [ ! -f ".out/conversation.json" ]; then \
+		rm -rf .out; \
+	fi
 	pnpm dlx co-coder run \
 		--task "Create all services found in sample.wsdl in Lambda/CDK, creating all openapi defs along with handlers, connectors and all boilerplace code for it in the correct places. Create a sample interface for each service as a starting point." \
 		--example "Use getTodo for a sample project structure" \
@@ -29,7 +34,9 @@ generate-services-from-wsdl:
 		--api-key "$$(security find-generic-password -w -a flaviostutz -s flaviostutz-openai-apikey)"
 
 generate-add-comments:
-	rm -rf .out
+	@if [ ! -f ".out/conversation.json" ]; then \
+		rm -rf .out; \
+	fi
 	npx -y co-coder run \
 		--task "add more comments to the existing codes" \
 		--base-dir "." \
