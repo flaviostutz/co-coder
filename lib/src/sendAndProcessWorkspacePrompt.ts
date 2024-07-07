@@ -45,6 +45,16 @@ export const sendAndProcessWorkspacePrompt = async (
     args.progressLogFunc,
     args.progressLogLevel,
   );
+  trace(
+    `Conversation history: ${JSON.stringify(
+      args.openAICompletionSession.getConversation(),
+      null,
+      2,
+    )}`,
+    args.progressLogFunc,
+    args.progressLogLevel,
+  );
+
   const output = await args.openAICompletionSession.sendPrompt(args.prompt);
 
   trace(

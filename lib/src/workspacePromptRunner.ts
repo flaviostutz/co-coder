@@ -95,7 +95,10 @@ export const workspacePromptRunner = async (
       conversationFile = path.join(args.outputDir, args.conversationFile);
     }
     info(
-      `Saving conversation to ${conversationFile.replace(args.outputDir, '')}`,
+      `Saving conversation to ${path.dirname(args.outputDir)}${conversationFile.replace(
+        args.outputDir,
+        '',
+      )}`,
       args.progressLogFunc,
       args.progressLogLevel,
     );

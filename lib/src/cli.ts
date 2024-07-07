@@ -57,6 +57,11 @@ export const run = async (processArgs: string[]): Promise<number> => {
     console.log('No files generated');
   } else {
     console.log(`${result.generatedFiles.length} files generated`);
+    for (let i = 0; i < result.generatedFiles.length; i += 1) {
+      const gfile = result.generatedFiles[i];
+      console.log(` - ${gfile}`);
+    }
+    console.log(``);
   }
   if (result.notes && result.notes.length > 0) {
     console.log('Notes from model:');

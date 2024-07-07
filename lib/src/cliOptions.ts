@@ -68,9 +68,9 @@ export const cliOptions = (y: Argv): Argv => {
     .option('conversation-save', {
       alias: 'cs',
       describe:
-        'If conversation-file is defined, save the history or not. Defaults to true. If false, it will only load the conversation history from the file, but not save it back after the prompts are run',
+        'If conversation-file is defined, save the history or not. If false, it will only load the conversation history from the file, but not save it back after the prompts are run',
       type: 'boolean',
-      default: '',
+      default: true,
       demandOption: false,
     })
     .option('max-tokens-total', {

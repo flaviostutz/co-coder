@@ -31,7 +31,7 @@ run-example-openai:
 		--max-file-requests 5 \
 		--preview-size 0 \
 		--log trace \
-		--api-key "$$(security find-generic-password -w -a flaviostutz -s flaviostutz-openai-apikey)"
+		--api-key "$$(security find-generic-password -w -s personal-openai-apikey)"
 
 	@# --task "Convert main.ts to Golang"
 	@# --task "Write a documentation for the cli with a summary, api and examples of usage" \
