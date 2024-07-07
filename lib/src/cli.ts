@@ -63,7 +63,7 @@ export const run = async (processArgs: string[]): Promise<number> => {
         params.outputDir,
         '',
       )}`;
-      console.log(` - ${gfileSimplified}`);
+      console.log(` ${gfileSimplified}`);
     }
     console.log(``);
   }
