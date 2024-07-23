@@ -84,7 +84,7 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
   const baseDirArg = defaultValue(argv['base-dir'] as string, '.');
   const fullFiles = splitComma(defaultValue(argv.files as string, ''));
   const filesIgnore = splitComma(defaultValue(argv['files-ignore'] as string, ''));
-  const useGitIgnore = defaultValueBoolean(argv['use-gitignore'] as boolean, true);
+  const useGitIgnore = defaultValueBoolean(argv['use-gitignore'], true);
 
   const model = argv.model as openai.ChatModel;
   const apiProvider = defaultValue(argv['api-provider'] as string, 'openai');
@@ -113,8 +113,8 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
     argv['conversation-file'] as string | undefined,
     undefined,
   );
-  const conversationSave = defaultValueBoolean(argv['conversation-save'] as boolean, true);
-  const conversationLoad = defaultValueBoolean(argv['conversation-load'] as boolean, true);
+  const conversationSave = defaultValueBoolean(argv['conversation-save'], true);
+  const conversationLoad = defaultValueBoolean(argv['conversation-load'], true);
 
   // common checks
   if (!task) {

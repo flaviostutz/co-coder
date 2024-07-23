@@ -7378,7 +7378,7 @@ packages:
     dev: false
 
   file:../lib/dist/co-coder-0.0.1.tgz:
-    resolution: {integrity: sha512-ASALW3tBCjvrY9QH6zqgPqECslqu3Zll1Qs8LdZUTcpHVbE0yCrc5u7XHf2PWrvpVCbk0Opoa8BIwm9Ailyr7g==, tarball: file:../lib/dist/co-coder-0.0.1.tgz}
+    resolution: {integrity: sha512-W9LeXl7j+VM7NRFI9JW8GnqJeCYxOjq2qt/D4MECUeQkAOo7vEVRP804UrcNs9nLQqnVkLz8fNpVFd8QgwVEFw==, tarball: file:../lib/dist/co-coder-0.0.1.tgz}
     name: co-coder
     version: 0.0.1
     hasBin: true

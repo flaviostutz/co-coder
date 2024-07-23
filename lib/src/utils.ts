@@ -7,7 +7,7 @@ export const defaultValueNumber = (value: unknown | undefined, defValue: number)
 };
 
 export const defaultValueBoolean = (value: unknown | undefined, defValue: boolean): boolean => {
-  return typeof value !== 'undefined' ? value === 'true' : defValue;
+  return typeof value !== 'undefined' ? `${value}` === 'true' : defValue;
 };
 
 export const splitComma = (source: string | undefined): string[] => {

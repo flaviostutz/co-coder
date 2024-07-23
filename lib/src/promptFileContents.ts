@@ -42,8 +42,6 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
 
   const ignorePatterns = args.ignoreFilePatterns || [];
   if (args.useGitIgnore || typeof args.useGitIgnore === 'undefined') {
-    // eslint-disable-next-line no-console
-    console.log(`>>>>> USING GITIGNORE ${args.useGitIgnore}`);
     ignorePatterns.push(...findAllGitIgnorePatterns(args.baseDir));
   }
 
