@@ -42,6 +42,8 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
 
   const ignorePatterns = args.ignoreFilePatterns || [];
   if (args.useGitIgnore || typeof args.useGitIgnore === 'undefined') {
+    // eslint-disable-next-line no-console
+    console.log(`>>>>> USING GITIGNORE ${args.useGitIgnore}`);
     ignorePatterns.push(...findAllGitIgnorePatterns(args.baseDir));
   }
 
@@ -88,13 +90,15 @@ export const promptFileContents = (args: PromptFileContentsArgs): PromptFileCont
       }
       // ignore this file if we reached the token limit
     } else {
-      // TODO evolve logger lib and pass it as a parameter
       if (i >= maxNumberOfFiles) {
+        // TODO evolve logger lib and pass it as a parameter
         // eslint-disable-next-line no-console
-        console.log(`Skipping file due to max requested files limit: ${relativePath}`);
+        console.log(
+          `Skipping file due to max files limit (limit=${maxNumberOfFiles}; file=${relativePath})`,
+        );
       } else {
         // eslint-disable-next-line no-console
-        console.log(`Skipping file due to token limit (${maxTokens}): ${relativePath}`);
+        console.log(`Skipping file due to token limit (max=${maxTokens}; file=${relativePath})`);
       }
       filesSkipped.push(relativePath);
     }

@@ -22,7 +22,7 @@ run-example-openai:
 	fi
 	pnpm exec ts-node src/main.ts run \
 		--task "Migrate the whole workspace to Golang, starting from cli.ts" \
-		--files "**/index.ts" \
+		--files "**/index.ts,**/*.gexf" \
 		--files-ignore "**/*.test.ts" \
 		--model gpt-4o \
 		--output .out \
@@ -30,7 +30,7 @@ run-example-openai:
 		--max-tokens-total 50000 \
 		--max-file-requests 5 \
 		--preview-size 0 \
-		--log trace \
+		--log debug \
 		--api-key "$$(security find-generic-password -w -s personal-openai-apikey)"
 
 	@# --task "Convert main.ts to Golang"

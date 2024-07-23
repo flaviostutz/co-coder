@@ -11,7 +11,7 @@ import { DefaultAzureCredential, getBearerTokenProvider } from '@azure/identity'
 import { workspacePromptRunner } from './workspacePromptRunner';
 import { WorkspacePromptRunnerArgs } from './types';
 import { ProgressLogLevel } from './progressLog';
-import { defaultValue, splitComma } from './utils';
+import { defaultValue, defaultValueBoolean, defaultValueNumber, splitComma } from './utils';
 import { cliOptions } from './cliOptions';
 
 // Define the command line arguments
@@ -84,7 +84,7 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
   const baseDirArg = defaultValue(argv['base-dir'] as string, '.');
   const fullFiles = splitComma(defaultValue(argv.files as string, ''));
   const filesIgnore = splitComma(defaultValue(argv['files-ignore'] as string, ''));
-  const useGitIgnore = defaultValue(argv['use-gitignore'] as boolean, true);
+  const useGitIgnore = defaultValueBoolean(argv['use-gitignore'] as boolean, true);
 
   const model = argv.model as openai.ChatModel;
   const apiProvider = defaultValue(argv['api-provider'] as string, 'openai');
@@ -93,18 +93,19 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
   const apiKey = argv['api-key'] as string | undefined;
   const apiAuth = defaultValue(argv['api-auth'], 'apikey');
 
-  const maxPrompts = defaultValue(argv['max-prompts'] as number, 20);
-  const maxNumberOfRequestedFiles = defaultValue(argv['max-file-requests'] as number, 10);
-  const maxFileSize = defaultValue(argv['max-file-size'] as number, 10000);
-  const maxTokensTotal = defaultValue(argv['max-tokens-total'] as number, 6000);
-  const maxTokensFiles = defaultValue(argv['max-tokens-files'] as number, 5000);
-  const maxTokensPerRequest = defaultValue(argv['max-tokens-per-request'] as number, 128000);
+  const maxPrompts = defaultValueNumber(argv['max-prompts'], 20);
+  const maxNumberOfFullContentFiles = defaultValueNumber(argv['max-files'], 10);
+  const maxNumberOfRequestedFiles = defaultValueNumber(argv['max-file-requests'], 10);
+  const maxFileSize = defaultValueNumber(argv['max-file-size'], 10000);
+  const maxTokensTotal = defaultValueNumber(argv['max-tokens-total'], 6000);
+  const maxTokensFiles = defaultValueNumber(argv['max-tokens-files'], 5000);
+  const maxTokensPerRequest = defaultValueNumber(argv['max-tokens-per-request'], 128000);
   const outputDirArg = defaultValue(argv.output as string, '.out');
   const progressLogLevel = defaultValue(argv.log as ProgressLogLevel, 'info');
 
   const task = defaultValue(argv.task as string, '');
   const previewFiles = splitComma(defaultValue(argv.preview as string | undefined, undefined));
-  const previewSize = defaultValue(argv['preview-size'] as number, 0);
+  const previewSize = defaultValueNumber(argv['preview-size'], 0);
   const projectInformation = defaultValue(argv.info as string | undefined, undefined);
   const example = defaultValue(argv.example, undefined) as string | undefined;
 
@@ -112,7 +113,8 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
     argv['conversation-file'] as string | undefined,
     undefined,
   );
-  const conversationSave = defaultValue(argv['conversation-save'] as boolean, true);
+  const conversationSave = defaultValueBoolean(argv['conversation-save'] as boolean, true);
+  const conversationLoad = defaultValueBoolean(argv['conversation-load'] as boolean, true);
 
   // common checks
   if (!task) {
@@ -165,6 +167,7 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
       ignoreFilePatterns: filesIgnore,
       maxFileSize: previewSize,
       maxTokens: maxTokensFiles,
+      maxNumberOfFiles: 99999,
     };
   }
 
@@ -219,6 +222,7 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
           ignoreFilePatterns: filesIgnore,
           maxFileSize,
           maxTokens: maxTokensFiles,
+          maxNumberOfFiles: maxNumberOfFullContentFiles,
         },
         previewContents,
       },
@@ -242,6 +246,7 @@ function validateAndExpandDefaults(argv: { [x: string]: unknown }): WorkspacePro
     progressLogLevel,
     conversationFile,
     conversationSave,
+    conversationLoad,
     progressLogFunc: console.log,
   };
 

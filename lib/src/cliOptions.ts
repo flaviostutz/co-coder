@@ -67,8 +67,15 @@ export const cliOptions = (y: Argv): Argv => {
     })
     .option('conversation-save', {
       alias: 'cs',
+      describe: 'If true, save the history to the conversation file after running prompts.',
+      type: 'boolean',
+      default: true,
+      demandOption: false,
+    })
+    .option('conversation-load', {
+      alias: 'cl',
       describe:
-        'If conversation-file is defined, save the history or not. If false, it will only load the conversation history from the file, but not save it back after the prompts are run',
+        'If true, load any existing history from conversation file as the starting point for the model prompts',
       type: 'boolean',
       default: true,
       demandOption: false,
@@ -99,6 +106,13 @@ export const cliOptions = (y: Argv): Argv => {
       describe: 'Max file size. Files larger than this will be truncated',
       type: 'string',
       default: '10000',
+      demandOption: false,
+    })
+    .option('max-files', {
+      alias: 'fm',
+      describe: 'Max number of full content files that can be sent to the model',
+      type: 'number',
+      default: 10,
       demandOption: false,
     })
     .option('max-file-requests', {

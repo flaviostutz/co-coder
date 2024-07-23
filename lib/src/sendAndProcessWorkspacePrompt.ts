@@ -110,7 +110,8 @@ export const sendAndProcessWorkspacePrompt = async (
       info(`  ${file.filename}`);
 
       if (!file.content) {
-        throw new Error('File content should not be empty');
+        // throw new Error('File content should not be empty');
+        file.content = '';
       }
 
       // create folder if it doesn't exist

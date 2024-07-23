@@ -56,7 +56,7 @@ export const workspacePromptRunner = async (
 
   let firstPrompt = true;
   if (args.conversationFile) {
-    if (fs.existsSync(args.conversationFile)) {
+    if (fs.existsSync(args.conversationFile) && args.conversationLoad) {
       openAICompletionSession.loadConversation(args.conversationFile);
       firstPrompt = false;
       info(

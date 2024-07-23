@@ -168,6 +168,7 @@ FOOTER (hasMoreToGenerate=false)`,
       model: 'gpt-3.5-turbo',
       outputDir: tempDir,
       conversationFile,
+      conversationLoad: true,
     });
 
     const newCodeContents2 = fs.readFileSync(path.join(tempDir, 'new-code2.txt'), 'utf-8');

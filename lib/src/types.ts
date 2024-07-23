@@ -156,6 +156,10 @@ export type SendAndProcessPromptArgs = {
    * Whether to save the conversation history to conversation file
    */
   conversationSave?: boolean;
+  /**
+   * Whether to load any existing conversation history from conversation file as the starting point of the prompts to model
+   */
+  conversationLoad?: boolean;
 
   /**
    * Define the log level for the progress log
@@ -181,6 +185,7 @@ export type WorkspacePromptRunnerArgs = Pick<
   | 'maxPrompts'
   | 'conversationFile'
   | 'conversationSave'
+  | 'conversationLoad'
   | 'requestedFilesDir'
 > & {
   /**
